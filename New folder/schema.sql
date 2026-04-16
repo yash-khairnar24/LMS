@@ -101,6 +101,31 @@ CREATE TABLE IF NOT EXISTS meetings (
   FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Business meetings: non-class live sessions for business accounts
+CREATE TABLE IF NOT EXISTS business_meetings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  host_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  meeting_code VARCHAR(20) UNIQUE NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_business_meetings_host (host_id),
+  INDEX idx_business_meetings_code (meeting_code),
+  FOREIGN KEY (host_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS business_meeting_participants (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  meeting_id INT NOT NULL,
+  user_id INT NOT NULL,
+  joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_business_meeting_user (meeting_id, user_id),
+  INDEX idx_bmp_meeting (meeting_id),
+  INDEX idx_bmp_user (user_id),
+  FOREIGN KEY (meeting_id) REFERENCES business_meetings(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Advertisement requests: teacher submits, admin approves, students view approved ads
 CREATE TABLE IF NOT EXISTS advertisements (
   id INT AUTO_INCREMENT PRIMARY KEY,

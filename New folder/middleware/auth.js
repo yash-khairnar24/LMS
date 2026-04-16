@@ -27,6 +27,14 @@ const isTeacher = (req, res, next) => {
   }
 };
 
+const isBusiness = (req, res, next) => {
+  if (req.user && req.user.role === 'business') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Access denied: Requires business role' });
+  }
+};
+
 const isAdmin = (req, res, next) => {
   const userEmail = req.user?.email?.toLowerCase?.();
   if (req.user?.isAdmin || userEmail === ADMIN_EMAIL.toLowerCase()) {
@@ -36,4 +44,4 @@ const isAdmin = (req, res, next) => {
   }
 };
 
-module.exports = { verifyToken, isTeacher, isAdmin };
+module.exports = { verifyToken, isTeacher, isBusiness, isAdmin };

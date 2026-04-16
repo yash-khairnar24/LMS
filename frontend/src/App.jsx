@@ -13,6 +13,7 @@ import AdminAdvertisementsPage from './pages/Admin/AdminAdvertisementsPage';
 import { ADMIN_EMAIL } from './constants/admin';
 import MeetingRoom from './pages/Dashboard/MeetingRoom';
 import JoinMeeting from './pages/Auth/JoinMeeting';
+import BusinessDashboard from './pages/Dashboard/BusinessDashboard';
 // import ClassDetails from './pages/Class/ClassDetails';
 
 const PrivateRoute = ({ children }) => {
@@ -77,6 +78,13 @@ function App() {
             <PrivateRoute>
               <RoleRoute roleRequired="teacher">
                 <TeacherDashboard />
+              </RoleRoute>
+            </PrivateRoute>
+          } />
+
+          <Route path="/business/*" element={
+              <RoleRoute roleRequired="business">
+                <BusinessDashboard />
               </RoleRoute>
             </PrivateRoute>
           } />

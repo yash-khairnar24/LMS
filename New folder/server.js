@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const classRoutes = require('./routes/classRoutes');
 const planRoutes = require('./routes/planRoutes');
 const advertisementRoutes = require('./routes/advertisementRoutes');
+const { runStartupMigrations } = require('./config/startupMigrations');
 // const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
@@ -40,4 +41,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  runStartupMigrations();
 });

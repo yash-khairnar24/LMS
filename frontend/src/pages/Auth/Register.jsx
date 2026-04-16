@@ -112,7 +112,7 @@ const Register = () => {
                 </div>
                 {role === 'business' && (
                   <p className="mt-3 rounded-2xl border border-violet-100 bg-violet-50 px-3 py-2 text-xs font-medium text-slate-600">
-                    Business accounts are guided to the meeting join flow after sign in.
+                    Business accounts are redirected to the live meeting dashboard after sign in.
                   </p>
                 )}
               </div>

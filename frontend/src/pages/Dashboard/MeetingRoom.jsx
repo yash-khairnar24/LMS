@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import { AuthContext } from '../../context/AuthContext';
@@ -29,13 +29,7 @@ const MeetingRoom = () => {
     meeting?.teacher_name || meeting?.host_name || meeting?.organizer_name || 'Host';
   const roomScope = meeting?.class_id || meeting?.id || 'room';
 
-  useEffect(() => {
-    if (code) {
-      verifyCode(code);
-    }
-  }, [code]);
-
-  const verifyCode = async (meetingCode) => {
+  const verifyCode = useCallback(async (meetingCode) => {
     setLoading(true);
     setError('');
     try {
@@ -50,7 +44,13 @@ const MeetingRoom = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (code) {
+      verifyCode(code);
+    }
+  }, [code, verifyCode]);
 
   const shareableLink = `${window.location.origin}/meeting/${code?.toUpperCase()}`;
 
@@ -58,6 +58,23 @@ const MeetingRoom = () => {
     navigator.clipboard.writeText(shareableLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleJoinMeeting = async () => {
+    try {
+      if (meeting?.meeting_type === 'business' && meeting?.id) {
+        await axios.post(
+          `http://localhost:5000/api/plans/business/meetings/${meeting.id}/join`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+    } catch (err) {
+      // Do not block meeting entry if analytics tracking fails.
+      console.error('Business meeting join tracking failed:', err);
+    } finally {
+      setInMeeting(true);
+    }
   };
 
   if (loading) {
@@ -110,6 +127,10 @@ const MeetingRoom = () => {
             */}<p className="text-slate-400 text-xs">{meetingContextName} - hosted by {meetingHostName}</p></div>
           </div>
           <div className="flex items-center gap-2">
+            <div className="hidden sm:inline-flex items-center gap-1.5 bg-slate-700 text-slate-100 px-3 py-1.5 rounded-xl text-xs font-bold">
+              <Wifi className="h-3.5 w-3.5" />
+              {participants + 1} in room
+            </div>
             <button
               onClick={copyLink}
               className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-colors"
@@ -228,7 +249,7 @@ const MeetingRoom = () => {
 
             {/* Join button */}
             <button
-              onClick={() => setInMeeting(true)}
+              onClick={handleJoinMeeting}
               className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-lg rounded-2xl shadow-xl shadow-indigo-900/40 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
             >
               <Wifi className="h-5 w-5" />

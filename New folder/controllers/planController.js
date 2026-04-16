@@ -185,6 +185,62 @@ function generateCode() {
   return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
+const ensureBusinessMeetingsTable = async () => {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS business_meetings (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      host_id INT NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      meeting_code VARCHAR(20) UNIQUE NOT NULL,
+      is_active BOOLEAN DEFAULT TRUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_business_meetings_host (host_id),
+      INDEX idx_business_meetings_code (meeting_code),
+      FOREIGN KEY (host_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+};
+
+const ensureBusinessMeetingParticipantsTable = async () => {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS business_meeting_participants (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      meeting_id INT NOT NULL,
+      user_id INT NOT NULL,
+      joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uniq_business_meeting_user (meeting_id, user_id),
+      INDEX idx_bmp_meeting (meeting_id),
+      INDEX idx_bmp_user (user_id),
+      FOREIGN KEY (meeting_id) REFERENCES business_meetings(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+};
+
+const generateUniqueMeetingCode = async () => {
+  let code = generateCode();
+  let isUnique = false;
+
+  while (!isUnique) {
+    await ensureBusinessMeetingsTable();
+    await ensureBusinessMeetingParticipantsTable();
+
+    const [existingClassMeeting] = await db.execute(
+      'SELECT id FROM meetings WHERE meeting_code = ? LIMIT 1',
+      [code]
+    );
+    const [existingBusinessMeeting] = await db.execute(
+      'SELECT id FROM business_meetings WHERE meeting_code = ? LIMIT 1',
+      [code]
+    );
+
+    isUnique = existingClassMeeting.length === 0 && existingBusinessMeeting.length === 0;
+    if (!isUnique) code = generateCode();
+  }
+
+  return code;
+};
+
 // Teacher creates a new meeting session
 exports.createMeeting = async (req, res) => {
   const teacher_id = req.user.id;
@@ -193,16 +249,12 @@ exports.createMeeting = async (req, res) => {
   if (!class_id || !title) return res.status(400).json({ message: 'Class and title are required' });
 
   try {
+    await ensureBusinessMeetingsTable();
+
     const [cls] = await db.execute('SELECT id FROM classes WHERE id = ? AND teacher_id = ?', [class_id, teacher_id]);
     if (cls.length === 0) return res.status(403).json({ message: 'Not authorized' });
 
-    let code = generateCode();
-    // Ensure uniqueness
-    let [existing] = await db.execute('SELECT id FROM meetings WHERE meeting_code = ?', [code]);
-    while (existing.length > 0) {
-      code = generateCode();
-      [existing] = await db.execute('SELECT id FROM meetings WHERE meeting_code = ?', [code]);
-    }
+    const code = await generateUniqueMeetingCode();
 
     const [result] = await db.execute(
       'INSERT INTO meetings (class_id, teacher_id, title, meeting_code) VALUES (?, ?, ?, ?)',
@@ -233,12 +285,14 @@ exports.getMeetings = async (req, res) => {
 
 // Student joins a meeting by code
 exports.joinByCode = async (req, res) => {
-  const student_id = req.user.id;
   const { meeting_code } = req.body;
 
   if (!meeting_code) return res.status(400).json({ message: 'Meeting code is required' });
 
   try {
+    await ensureBusinessMeetingsTable();
+    await ensureBusinessMeetingParticipantsTable();
+
     const [meetings] = await db.execute(
       `SELECT m.*, c.class_name, u.name as teacher_name
        FROM meetings m
@@ -249,7 +303,29 @@ exports.joinByCode = async (req, res) => {
     );
 
     if (meetings.length === 0) {
-      return res.status(404).json({ message: 'Invalid or expired meeting code' });
+      const [businessMeetings] = await db.execute(
+        `SELECT
+          bm.id,
+          bm.meeting_code,
+          bm.title,
+          bm.is_active,
+          bm.created_at,
+          bm.host_id AS teacher_id,
+          NULL AS class_id,
+          u.name AS host_name,
+          'Business Live Session' AS group_name,
+          'business' AS meeting_type
+        FROM business_meetings bm
+        JOIN users u ON u.id = bm.host_id
+        WHERE bm.meeting_code = ? AND bm.is_active = TRUE`,
+        [meeting_code.toUpperCase()]
+      );
+
+      if (businessMeetings.length === 0) {
+        return res.status(404).json({ message: 'Invalid or expired meeting code' });
+      }
+
+      return res.status(200).json({ meeting: businessMeetings[0] });
     }
 
     res.status(200).json({ meeting: meetings[0] });
@@ -272,5 +348,131 @@ exports.toggleMeeting = async (req, res) => {
   } catch (err) {
     console.error('Toggle meeting error:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Business user creates a code-based live meeting
+exports.createBusinessMeeting = async (req, res) => {
+  const host_id = req.user.id;
+  const { title } = req.body;
+
+  if (!title || !title.trim()) {
+    return res.status(400).json({ message: 'Meeting title is required' });
+  }
+
+  try {
+    await ensureBusinessMeetingsTable();
+    await ensureBusinessMeetingParticipantsTable();
+    const code = await generateUniqueMeetingCode();
+
+    const [result] = await db.execute(
+      'INSERT INTO business_meetings (host_id, title, meeting_code, is_active) VALUES (?, ?, ?, TRUE)',
+      [host_id, title.trim(), code]
+    );
+
+    res.status(201).json({
+      message: 'Business meeting created',
+      meetingId: result.insertId,
+      meeting_code: code
+    });
+  } catch (err) {
+    console.error('Create business meeting error:', err);
+    res.status(500).json({ message: 'Server error creating meeting' });
+  }
+};
+
+// Business user sees own created meetings
+exports.getBusinessMeetings = async (req, res) => {
+  const host_id = req.user.id;
+
+  try {
+    await ensureBusinessMeetingsTable();
+    await ensureBusinessMeetingParticipantsTable();
+
+    const [meetings] = await db.execute(
+      `SELECT
+        bm.id,
+        bm.title,
+        bm.meeting_code,
+        bm.is_active,
+        bm.created_at,
+        COUNT(bmp.user_id) AS joined_count
+       FROM business_meetings bm
+       LEFT JOIN business_meeting_participants bmp ON bmp.meeting_id = bm.id
+       WHERE bm.host_id = ?
+       GROUP BY bm.id, bm.title, bm.meeting_code, bm.is_active, bm.created_at
+       ORDER BY bm.created_at DESC`,
+      [host_id]
+    );
+
+    res.status(200).json({ meetings });
+  } catch (err) {
+    console.error('Get business meetings error:', err);
+    res.status(500).json({ message: 'Server error fetching meetings' });
+  }
+};
+
+// Business user toggles meeting active/inactive
+exports.toggleBusinessMeeting = async (req, res) => {
+  const host_id = req.user.id;
+  const { meetingId } = req.params;
+
+  try {
+    await ensureBusinessMeetingsTable();
+    await ensureBusinessMeetingParticipantsTable();
+
+    const [meeting] = await db.execute(
+      'SELECT id, is_active FROM business_meetings WHERE id = ? AND host_id = ?',
+      [meetingId, host_id]
+    );
+
+    if (meeting.length === 0) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const newStatus = !meeting[0].is_active;
+    await db.execute('UPDATE business_meetings SET is_active = ? WHERE id = ?', [newStatus, meetingId]);
+
+    res.status(200).json({ message: 'Meeting status updated', is_active: newStatus });
+  } catch (err) {
+    console.error('Toggle business meeting error:', err);
+    res.status(500).json({ message: 'Server error updating meeting status' });
+  }
+};
+
+// Track a unique participant joining a business meeting
+exports.trackBusinessMeetingJoin = async (req, res) => {
+  const user_id = req.user.id;
+  const { meetingId } = req.params;
+
+  try {
+    await ensureBusinessMeetingsTable();
+    await ensureBusinessMeetingParticipantsTable();
+
+    const [meeting] = await db.execute(
+      'SELECT id FROM business_meetings WHERE id = ? AND is_active = TRUE',
+      [meetingId]
+    );
+
+    if (meeting.length === 0) {
+      return res.status(404).json({ message: 'Active business meeting not found' });
+    }
+
+    await db.execute(
+      `INSERT INTO business_meeting_participants (meeting_id, user_id)
+       VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE joined_at = joined_at`,
+      [meetingId, user_id]
+    );
+
+    const [rows] = await db.execute(
+      'SELECT COUNT(*) AS joined_count FROM business_meeting_participants WHERE meeting_id = ?',
+      [meetingId]
+    );
+
+    res.status(200).json({ message: 'Join tracked', joined_count: rows[0]?.joined_count || 0 });
+  } catch (err) {
+    console.error('Track business meeting join error:', err);
+    res.status(500).json({ message: 'Server error tracking join' });
   }
 };
