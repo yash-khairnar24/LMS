@@ -100,3 +100,21 @@ CREATE TABLE IF NOT EXISTS meetings (
   FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
   FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Advertisement requests: teacher submits, admin approves, students view approved ads
+CREATE TABLE IF NOT EXISTS advertisements (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  teacher_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  button_text VARCHAR(100) DEFAULT 'Learn More',
+  button_link VARCHAR(500) DEFAULT NULL,
+  status ENUM('pending','approved','rejected') DEFAULT 'pending',
+  approved_by INT NULL,
+  approved_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_ads_status (status),
+  INDEX idx_ads_teacher (teacher_id),
+  FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
+);

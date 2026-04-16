@@ -8,6 +8,9 @@ import StudentDashboard from './pages/Dashboard/StudentDashboard';
 import ClassPlanView from './pages/Dashboard/ClassPlanView';
 import PaymentPage from './pages/Dashboard/PaymentPage';
 import FeatureView from './pages/Dashboard/FeatureView';
+import TeacherAdvertisePage from './pages/Dashboard/TeacherAdvertisePage';
+import AdminAdvertisementsPage from './pages/Admin/AdminAdvertisementsPage';
+import { ADMIN_EMAIL } from './constants/admin';
 // import ClassDetails from './pages/Class/ClassDetails';
 
 const PrivateRoute = ({ children }) => {
@@ -20,10 +23,20 @@ const RoleRoute = ({ children, roleRequired }) => {
   return user?.role === roleRequired ? children : <Navigate to="/" />;
 };
 
+const AdminRoute = ({ children }) => {
+  const { user } = React.useContext(AuthContext);
+  const isAdminUser = user?.isAdmin || user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  return isAdminUser ? children : <Navigate to="/" />;
+};
+
 const DashboardRouter = () => {
   const { user } = React.useContext(AuthContext);
   if (!user) return <Navigate to="/login" />;
-  
+
+  if (user.isAdmin || user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    return <Navigate to="/admin/advertisements" />;
+  }
+
   if (user.role === 'teacher') {
     return <Navigate to="/teacher" />;
   } else {
@@ -39,6 +52,22 @@ function App() {
           <Route path="/" element={<DashboardRouter />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
+          <Route path="/admin/advertisements" element={
+            <PrivateRoute>
+              <AdminRoute>
+                <AdminAdvertisementsPage />
+              </AdminRoute>
+            </PrivateRoute>
+          } />
+
+          <Route path="/teacher/advertisements" element={
+            <PrivateRoute>
+              <RoleRoute roleRequired="teacher">
+                <TeacherAdvertisePage />
+              </RoleRoute>
+            </PrivateRoute>
+          } />
           
           <Route path="/teacher/*" element={
             <PrivateRoute>

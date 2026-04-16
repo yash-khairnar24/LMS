@@ -6,6 +6,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const classRoutes = require('./routes/classRoutes');
 const planRoutes = require('./routes/planRoutes');
+const advertisementRoutes = require('./routes/advertisementRoutes');
 // const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
@@ -22,6 +23,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/plans', planRoutes);
+app.use('/api/advertisements', advertisementRoutes);
 // app.use('/api/uploads', uploadRoutes);
 
 // Base route

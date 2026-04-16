@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import {
@@ -7,7 +8,7 @@ import {
   X, Pencil, Trash2, ArrowRight, AlertTriangle,
   CheckCircle, Video, HelpCircle, ClipboardCheck,
   MessageSquareText, PhoneCall, Wifi, Copy, ToggleLeft, ToggleRight,
-  Menu, LayoutDashboard, GraduationCap, FileUp, Megaphone
+  Menu, LayoutDashboard, GraduationCap, Megaphone, ShieldCheck
 } from 'lucide-react';
 
 const FEATURES = [
@@ -23,6 +24,7 @@ const FEATURES = [
 
 const TeacherDashboard = () => {
   const { user, token, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newClassName, setNewClassName] = useState('');
@@ -44,7 +46,14 @@ const TeacherDashboard = () => {
     { label: 'Study Material',  icon: BookOpen,          bg: 'bg-blue-50',      color: 'text-blue-500',     action: () => setSidebarOpen(false) },
     { label: 'Assignments',     icon: ClipboardCheck,    bg: 'bg-purple-50',    color: 'text-purple-500',   action: () => setSidebarOpen(false) },
     { label: 'Smart Test',      icon: Clock,             bg: 'bg-emerald-50',   color: 'text-emerald-500',  action: () => setSidebarOpen(false) },
-    { label: 'Announcements',   icon: Megaphone,         bg: 'bg-amber-50',     color: 'text-amber-500',    action: () => setSidebarOpen(false) },
+    { label: 'Advertisements',  icon: Megaphone,         bg: 'bg-amber-50',     color: 'text-amber-500',    action: () => { setSidebarOpen(false); navigate('/teacher/advertisements'); } },
+    ...(user?.isAdmin ? [{
+      label: 'Admin Approvals',
+      icon: ShieldCheck,
+      bg: 'bg-slate-100',
+      color: 'text-slate-700',
+      action: () => { setSidebarOpen(false); navigate('/admin/advertisements'); }
+    }] : []),
     { label: 'Chat',            icon: MessageSquareText, bg: 'bg-blue-50',      color: 'text-blue-600',     action: () => setSidebarOpen(false) },
     { label: 'Schedule',        icon: Calendar,          bg: 'bg-slate-100',    color: 'text-slate-600',    action: () => setSidebarOpen(false) },
     { label: 'Support',         icon: PhoneCall,         bg: 'bg-fuchsia-50',   color: 'text-fuchsia-500',  action: () => setSidebarOpen(false) },
@@ -240,10 +249,10 @@ const TeacherDashboard = () => {
   };
 
   const dashboardFeatures = [
-    { title: 'Start Meeting', icon: PlayCircle, bgColor: 'bg-indigo-100', iconColor: 'text-indigo-600' },
-    { title: 'Upload Material', icon: BookOpen, bgColor: 'bg-emerald-100', iconColor: 'text-emerald-600' },
-    { title: 'Announcements', icon: Bell, bgColor: 'bg-amber-100', iconColor: 'text-amber-600' },
-    { title: 'Schedule Class', icon: Calendar, bgColor: 'bg-rose-100', iconColor: 'text-rose-600' }
+    { title: 'Start Meeting', icon: PlayCircle, bgColor: 'bg-indigo-100', iconColor: 'text-indigo-600', action: () => alert('Feature coming soon!') },
+    { title: 'Upload Material', icon: BookOpen, bgColor: 'bg-emerald-100', iconColor: 'text-emerald-600', action: () => alert('Feature coming soon!') },
+    { title: 'Add Advertise', icon: Bell, bgColor: 'bg-amber-100', iconColor: 'text-amber-600', action: () => navigate('/teacher/advertisements') },
+    { title: 'Schedule Class', icon: Calendar, bgColor: 'bg-rose-100', iconColor: 'text-rose-600', action: () => alert('Feature coming soon!') }
   ];
 
   return (
@@ -297,7 +306,7 @@ const TeacherDashboard = () => {
           <h2 className="text-2xl font-bold text-slate-800 mb-4 px-1">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {dashboardFeatures.map((item, i) => (
-              <button key={i} onClick={() => alert('Feature coming soon!')} className={`${item.bgColor} rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-md transition-all duration-300 hover:-translate-y-1`}>
+              <button key={i} onClick={item.action} className={`${item.bgColor} rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-md transition-all duration-300 hover:-translate-y-1`}>
                 <div className="h-14 w-14 mb-3 flex items-center justify-center rounded-full bg-white/50">
                   <item.icon className={`h-7 w-7 ${item.iconColor}`} />
                 </div>

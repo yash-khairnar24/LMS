@@ -2,7 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
-import { BookOpen, Search, LogOut, CheckCircle, Menu, PlayCircle, HelpCircle, Video, ClipboardCheck, Clock, MessageSquareText, PhoneCall, Home, User, CalendarClock, Bell, ArrowRight, X, GraduationCap, LayoutDashboard } from 'lucide-react';
+import { BookOpen, Search, LogOut, CheckCircle, Menu, PlayCircle, HelpCircle, Video, ClipboardCheck, Clock, MessageSquareText, PhoneCall, Home, User, Bell, ArrowRight, X, GraduationCap, LayoutDashboard } from 'lucide-react';
+import AdvertisementCarousel from '../../components/AdvertisementCarousel';
 
 const StudentDashboard = () => {
   const { user, token, logout } = useContext(AuthContext);
@@ -20,23 +21,8 @@ const StudentDashboard = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const [currentAdIndex, setCurrentAdIndex] = useState(0);
-
-  const upcomingClassesAd = [
-    { title: 'Advanced Database Concepts', time: 'Starts in 45 minutes', prof: 'Prof. Smith', tag: 'Up Next' },
-    { title: 'Data Structures & Algorithms', time: 'Starts in 2 hours', prof: 'Prof. Johnson', tag: 'Upcoming' },
-    { title: 'Web Development Bootcamp', time: 'Starts tomorrow', prof: 'Prof. Davis', tag: 'Featured' },
-    { title: 'Machine Learning Basics', time: 'Starts on Friday', prof: 'Prof. Wilson', tag: 'New' }
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentAdIndex((prevIndex) => (prevIndex + 1) % upcomingClassesAd.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const currentAd = upcomingClassesAd[currentAdIndex];
+  const [approvedAds, setApprovedAds] = useState([]);
+  const [adsLoading, setAdsLoading] = useState(false);
 
   const sidebarLinks = [
     { label: 'Dashboard',      icon: LayoutDashboard,   action: () => { setSidebarOpen(false); navigate('/student'); } },
@@ -54,6 +40,7 @@ const StudentDashboard = () => {
   useEffect(() => {
     fetchEnrolledClasses();
     fetchAllClasses();
+    fetchApprovedAds();
   }, []);
 
   const fetchEnrolledClasses = async () => {
@@ -75,6 +62,21 @@ const StudentDashboard = () => {
       setAllClasses(res.data.classes);
     } catch (error) {
       console.error('Error fetching all classes', error);
+    }
+  };
+
+  const fetchApprovedAds = async () => {
+    try {
+      setAdsLoading(true);
+      const res = await axios.get('http://localhost:5000/api/advertisements/approved', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setApprovedAds(res.data.advertisements || []);
+    } catch (error) {
+      console.error('Error fetching approved advertisements', error);
+      setApprovedAds([]);
+    } finally {
+      setAdsLoading(false);
     }
   };
 
@@ -144,30 +146,12 @@ const StudentDashboard = () => {
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         
-        {/* Up Next Banner */}
-        <div className="mb-6 group cursor-pointer relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[24px] rotate-1 scale-[1.01] opacity-20 group-hover:rotate-2 transition-transform"></div>
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-[24px] p-6 shadow-md relative overflow-hidden flex items-center justify-between">
-            {/* Decorative background circle */}
-            <div className="absolute right-0 top-0 h-32 w-32 bg-white/10 rounded-full translate-x-8 -translate-y-8 blur-2xl"></div>
-            
-            <div className="flex items-center gap-4 z-10 w-full">
-              <div className="bg-white/20 p-4 rounded-[20px] backdrop-blur-sm hidden sm:block">
-                <CalendarClock className="h-8 w-8 text-white" />
-              </div>
-              <div key={currentAdIndex} className="flex-1 animate-[pulse_1s_ease-out]">
-                <span className="inline-block px-3 py-1 bg-white/20 text-indigo-50 text-[10px] font-bold uppercase tracking-wider rounded-lg mb-2 backdrop-blur-sm">{currentAd.tag}</span>
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-1 leading-tight">{currentAd.title}</h3>
-                <p className="text-indigo-100 text-sm font-medium">{currentAd.time} • {currentAd.prof}</p>
-              </div>
-              <div>
-                <button className="bg-white text-indigo-600 font-bold px-5 py-2.5 rounded-xl shadow-sm hover:bg-slate-50 transition-colors active:scale-95 whitespace-nowrap">
-                  Join Now
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AdvertisementCarousel
+          key={`ad-carousel-${approvedAds.length}`}
+          slides={approvedAds}
+          loading={adsLoading}
+          autoPlayInterval={3500}
+        />
 
         {/* Feature Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

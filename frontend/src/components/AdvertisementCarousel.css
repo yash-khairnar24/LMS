@@ -1,0 +1,224 @@
+.ad-carousel {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.ad-carousel__viewport {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.18);
+}
+
+.ad-carousel__track {
+  display: flex;
+  width: 100%;
+  will-change: transform;
+}
+
+.ad-carousel__slide {
+  min-width: 100%;
+}
+
+.ad-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  min-height: 160px;
+  padding: 1.5rem;
+  color: #ffffff;
+  background: linear-gradient(110deg, #3f49e2 0%, #7328d6 48%, #9718d8 100%);
+  overflow: hidden;
+}
+
+.ad-card__orb {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(2px);
+  z-index: 2;
+}
+
+.ad-card__body {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+}
+
+.ad-card__badge {
+  display: inline-block;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.65rem;
+}
+
+.ad-card__title {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.8vw, 2rem);
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.ad-card__description {
+  margin: 0.35rem 0 0;
+  color: rgba(244, 245, 255, 0.92);
+  font-size: 0.98rem;
+  max-width: 68ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ad-card__author {
+  margin: 0.55rem 0 0;
+  color: rgba(232, 234, 255, 0.82);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.ad-card__action {
+  position: relative;
+  z-index: 2;
+}
+
+.ad-card__button {
+  border: 0;
+  outline: none;
+  border-radius: 0.85rem;
+  padding: 0.78rem 1.3rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #5b6a8d;
+  background: #e7edf7;
+  cursor: pointer;
+  transition: transform 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.ad-card__button:hover {
+  transform: translateY(-1px);
+  background: #f3f7ff;
+  color: #3b4d7a;
+}
+
+.ad-card__button:disabled {
+  cursor: not-allowed;
+  background: #d5dbe5;
+  color: #8996af;
+}
+
+.ad-card__shine {
+  position: absolute;
+  right: -80px;
+  top: -70px;
+  width: 220px;
+  height: 220px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ad-carousel__dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.72rem;
+}
+
+.ad-carousel__dot {
+  width: 7px;
+  height: 7px;
+  border: 0;
+  border-radius: 999px;
+  background: #cfd8ef;
+  cursor: pointer;
+  transition: all 220ms ease;
+}
+
+.ad-carousel__dot.is-active {
+  width: 21px;
+  background: #5a62f1;
+}
+
+.ad-carousel--state .ad-carousel__state {
+  border-radius: 1.25rem;
+  border: 1px solid #d8e0ef;
+  background: #ffffff;
+  color: #5f6980;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 1rem 1.1rem;
+}
+
+@media (max-width: 900px) {
+  .ad-card {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "orb body"
+      "action action";
+    row-gap: 1rem;
+    padding: 1.15rem;
+    min-height: 178px;
+  }
+
+  .ad-card__orb {
+    grid-area: orb;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    font-size: 0.92rem;
+  }
+
+  .ad-card__body {
+    grid-area: body;
+  }
+
+  .ad-card__action {
+    grid-area: action;
+    width: 100%;
+  }
+
+  .ad-card__button {
+    width: 100%;
+  }
+
+  .ad-card__description {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}
+
+@media (max-width: 520px) {
+  .ad-card__badge {
+    font-size: 0.62rem;
+  }
+
+  .ad-card__title {
+    font-size: 1.08rem;
+  }
+
+  .ad-card__description {
+    font-size: 0.9rem;
+  }
+
+  .ad-card__author {
+    font-size: 0.82rem;
+  }
+}

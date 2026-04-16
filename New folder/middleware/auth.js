@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const { ADMIN_EMAIL } = require('../config/admin');
 
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -26,4 +27,13 @@ const isTeacher = (req, res, next) => {
   }
 };
 
-module.exports = { verifyToken, isTeacher };
+const isAdmin = (req, res, next) => {
+  const userEmail = req.user?.email?.toLowerCase?.();
+  if (req.user?.isAdmin || userEmail === ADMIN_EMAIL.toLowerCase()) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Access denied: Requires admin access' });
+  }
+};
+
+module.exports = { verifyToken, isTeacher, isAdmin };
