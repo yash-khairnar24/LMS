@@ -335,6 +335,92 @@ const Login = () => {
         </div>
       </section>
 
+      {/* ── SITEMAP / LINKS SECTION ───────────────────────── */}
+      <section style={{ background: '#faf7f2' }} className="py-16">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+
+            {/* Column 1 — Top Features */}
+            <div>
+              <h4 className="text-slate-800 font-extrabold text-sm uppercase tracking-widest mb-5 pb-2 border-b border-slate-200">Top Features</h4>
+              <ul className="space-y-2.5">
+                {[
+                  'Classroom Fees Management',
+                  'Best Teaching App for Teachers',
+                  'Online Classroom Management',
+                  'Online Teaching Platforms for Teachers',
+                  'Best Classroom Management Software for Teachers',
+                  'Empower Your Teaching with AI: Study Material & Test Creation',
+                  'Best Fee Management System for Schools and Institutes',
+                  'Best Free Online Whiteboard App for Teaching',
+                  'Best Online Teaching Platform',
+                  'Top Online Teaching Tools | Enhance Your Virtual Classroom Experience',
+                  'Classroom App for Teachers: A Game Changer in Online Teaching',
+                  'Classroom Management',
+                ].map((item, i) => (
+                  <li key={i}>
+                    <a href="#" className="text-slate-500 text-sm hover:text-violet-600 transition-colors leading-snug block">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Column 2 — Courses */}
+            <div>
+              <h4 className="text-slate-800 font-extrabold text-sm uppercase tracking-widest mb-5 pb-2 border-b border-slate-200">Courses</h4>
+              <ul className="space-y-2.5">
+                {[
+                  'CBSE', 'ICSE', 'CAT', 'IAS', 'JEE', 'NEET',
+                  'Commerce', 'JEE Main', 'NCERT', 'JEE Advanced',
+                  'Commerce Education', 'Maths and Science Tutoring',
+                  'Banking', 'Language', 'Coding',
+                ].map((item, i) => (
+                  <li key={i}>
+                    <a href="#" className="text-slate-500 text-sm hover:text-violet-600 transition-colors leading-snug block">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Column 3 — Exams */}
+            <div>
+              <h4 className="text-slate-800 font-extrabold text-sm uppercase tracking-widest mb-5 pb-2 border-b border-slate-200">Exams</h4>
+              <ul className="space-y-2.5">
+                {[
+                  'CBSE Exams', 'School Exams', 'Board Exams',
+                  'GATE 2024', 'IAS Exam', 'JEE Main Exam',
+                  'NEET Exam', 'Bank Exam', 'Government Exams',
+                  'Education News',
+                ].map((item, i) => (
+                  <li key={i}>
+                    <a href="#" className="text-slate-500 text-sm hover:text-violet-600 transition-colors leading-snug block">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Column 4 — Exam Preparation */}
+            <div>
+              <h4 className="text-slate-800 font-extrabold text-sm uppercase tracking-widest mb-5 pb-2 border-b border-slate-200">Exam Preparation</h4>
+              <ul className="space-y-2.5">
+                {[
+                  'CAT Prep', 'IAS Prep', 'Maths', 'Physics', 'Chemistry',
+                  'Biology', 'JEE Prep', 'JEE Advanced Prep', 'NEET Prep',
+                  'Maths Problem Solving', 'Physics Conceptual Learning',
+                  'Chemistry Interactive Tutorial', 'Biology Exam Questions',
+                  'Study Schedule', 'Subject-Specific Prep',
+                ].map((item, i) => (
+                  <li key={i}>
+                    <a href="#" className="text-slate-500 text-sm hover:text-violet-600 transition-colors leading-snug block">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* ── FOOTER ────────────────────────────────────────── */}
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm">
         <div className="flex items-center justify-center gap-2 mb-2">

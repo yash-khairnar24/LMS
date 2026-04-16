@@ -11,6 +11,8 @@ import FeatureView from './pages/Dashboard/FeatureView';
 import TeacherAdvertisePage from './pages/Dashboard/TeacherAdvertisePage';
 import AdminAdvertisementsPage from './pages/Admin/AdminAdvertisementsPage';
 import { ADMIN_EMAIL } from './constants/admin';
+import MeetingRoom from './pages/Dashboard/MeetingRoom';
+import JoinMeeting from './pages/Auth/JoinMeeting';
 // import ClassDetails from './pages/Class/ClassDetails';
 
 const PrivateRoute = ({ children }) => {
@@ -39,6 +41,8 @@ const DashboardRouter = () => {
 
   if (user.role === 'teacher') {
     return <Navigate to="/teacher" />;
+  } else if (user.role === 'business') {
+    return <Navigate to="/join" />;
   } else {
     return <Navigate to="/student" />;
   }
@@ -109,6 +113,17 @@ function App() {
               <RoleRoute roleRequired="student">
                 <StudentDashboard />
               </RoleRoute>
+            </PrivateRoute>
+          } />
+
+          {/* Public join page – enter code to join a meeting */}
+          <Route path="/join" element={<JoinMeeting />} />
+          <Route path="/join/:code" element={<JoinMeeting />} />
+
+          {/* Meeting room – authenticated users only */}
+          <Route path="/meeting/:code" element={
+            <PrivateRoute>
+              <MeetingRoom />
             </PrivateRoute>
           } />
 
