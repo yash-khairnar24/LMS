@@ -10,7 +10,7 @@ exports.register = async (req, res) => {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
-  if (role !== 'teacher' && role !== 'student') {
+  if (role !== 'teacher' && role !== 'student' && role !== 'business') {
     return res.status(400).json({ message: 'Invalid role' });
   }
 

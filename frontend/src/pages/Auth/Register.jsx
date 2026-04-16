@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { BookOpen, AlertCircle, Users, GraduationCap } from 'lucide-react';
+import { BookOpen, AlertCircle, Users, GraduationCap, Briefcase } from 'lucide-react';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -68,7 +68,7 @@ const Register = () => {
                 </div>
               </div>
               <h1 className="text-2xl font-extrabold text-white">Create an Account</h1>
-              <p className="text-white/80 text-sm mt-1 font-medium">Join 10 lakh+ learners on EduLearn</p>
+              <p className="text-white/80 text-sm mt-1 font-medium">Choose the account type that fits you best</p>
             </div>
 
             {/* Tab switch */}
@@ -91,10 +91,11 @@ const Register = () => {
 
               {/* Role selector */}
               <div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   {[
                     { val: 'student', label: 'Student', icon: BookOpen },
                     { val: 'teacher', label: 'Teacher', icon: Users },
+                    { val: 'business', label: 'Business', icon: Briefcase },
                   ].map(({ val, label, icon: Icon }) => (
                     <label
                       key={val}
@@ -109,6 +110,11 @@ const Register = () => {
                     </label>
                   ))}
                 </div>
+                {role === 'business' && (
+                  <p className="mt-3 rounded-2xl border border-violet-100 bg-violet-50 px-3 py-2 text-xs font-medium text-slate-600">
+                    Business accounts are guided to the meeting join flow after sign in.
+                  </p>
+                )}
               </div>
 
               <div>

@@ -1,10 +1,10 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import {
   BookOpen, AlertCircle, X, PlayCircle, ClipboardCheck,
   MessageSquareText, Clock, Users, CheckCircle,
-  GraduationCap, Video
+  GraduationCap, Video, Wifi
 } from 'lucide-react';
 
 /* ── floating stat card ─────────────────────────────────────── */
@@ -32,13 +32,15 @@ const Login = () => {
   const [showModal, setShowModal] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
     const result = await login(email, password);
     if (result.success) {
-      navigate('/');
+      navigate(redirectTo);
     } else {
       setError(result.message);
     }
@@ -83,6 +85,13 @@ const Login = () => {
 
           {/* Auth buttons */}
           <div className="flex items-center gap-3">
+            {/* Join meeting link */}
+            <Link
+              to="/join"
+              className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-emerald-600 border-2 border-emerald-400 rounded-xl hover:bg-emerald-50 transition-colors"
+            >
+              <Wifi className="h-4 w-4" /> Join Meeting
+            </Link>
             <button
               onClick={() => setShowModal(true)}
               className="px-5 py-2 text-sm font-bold text-violet-500 border-2 border-violet-400 rounded-xl hover:bg-violet-50 transition-colors"

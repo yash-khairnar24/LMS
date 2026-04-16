@@ -4,7 +4,8 @@ import {
   ArrowLeft, PlayCircle, BookOpen, HelpCircle, Video,
   ClipboardCheck, Clock, MessageSquareText, PhoneCall,
   CheckCircle, Send, Search, Download, Upload,
-  FileText, ChevronRight, ThumbsUp, Filter, X, Bell, Star
+  FileText, ChevronRight, ThumbsUp, Filter, X, Bell, Star,
+  Wifi, Link2, ArrowRight
 } from 'lucide-react';
 
 // ── Dummy Data ────────────────────────────────────────────────────────────────
@@ -141,6 +142,10 @@ const FeatureView = () => {
   // Downloads
   const [downloaded, setDownloaded]     = useState(new Set());
 
+  // Join by code (Live Class)
+  const [joinCode, setJoinCode]         = useState('');
+  const [joinError, setJoinError]       = useState('');
+
   // ── Handlers ──────────────────────────────────────────────────────────────
   const effectiveSubject = doubtSubject === 'other' ? customSubject : doubtSubject;
 
@@ -231,40 +236,90 @@ const FeatureView = () => {
 
         {/* ── LIVE CLASS ── */}
         {type === 'live-class' && (
-          <div className="space-y-4">
-            <h2 className="font-bold text-slate-800 text-lg">Upcoming & Live Sessions</h2>
-            {data.sessions.map(s => (
-              <div key={s.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between hover:shadow-md transition-all">
-                <div className="flex items-start gap-4">
-                  <div className={`h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-xl ${s.isLive ? 'bg-red-100' : 'bg-slate-100'}`}>
-                    <PlayCircle className={`h-6 w-6 ${s.isLive ? 'text-red-500' : 'text-slate-400'}`} />
+          <div className="space-y-6">
+
+            {/* ─ Join by Code panel ─ */}
+            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-40 w-40 bg-white/10 rounded-full translate-x-12 -translate-y-12 blur-2xl pointer-events-none" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="bg-white/20 p-2 rounded-xl">
+                    <Wifi className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      {s.isLive && <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">● LIVE</span>}
-                      <h3 className="font-bold text-slate-800">{s.title}</h3>
-                    </div>
-                    <p className="text-sm text-slate-500">{s.teacher} • <span className="text-indigo-500 font-medium">{s.subject}</span></p>
-                    <p className="text-xs text-slate-400 mt-0.5">🕐 {s.time} • 👥 {s.students} students</p>
+                    <h2 className="text-white font-bold text-lg leading-tight">Join a Live Session</h2>
+                    <p className="text-indigo-200 text-xs">Enter the code shared by your teacher</p>
                   </div>
                 </div>
-                {s.isLive ? (
-                  <button className="flex-shrink-0 px-5 py-2.5 rounded-xl font-bold text-sm bg-red-500 hover:bg-red-600 text-white shadow-sm transition-colors">
-                    ▶ Join Now
+
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={joinCode}
+                    onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError(''); }}
+                    placeholder="e.g. AB12CD34"
+                    maxLength={20}
+                    className="flex-1 bg-white/20 border border-white/30 text-white placeholder-white/50 font-mono font-bold text-lg text-center tracking-widest px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-white/50 transition-all uppercase"
+                  />
+                  <button
+                    onClick={() => {
+                      const code = joinCode.trim().toUpperCase();
+                      if (!code || code.length < 4) { setJoinError('Enter a valid code'); return; }
+                      navigate(`/meeting/${code}`);
+                    }}
+                    className="flex-shrink-0 bg-white text-indigo-700 hover:bg-indigo-50 font-bold px-6 py-3 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
+                  >
+                    <ArrowRight className="h-5 w-5" />
+                    <span className="hidden sm:block">Join</span>
                   </button>
-                ) : reminders.has(s.id) ? (
-                  <button onClick={() => setReminders(prev => { const n = new Set(prev); n.delete(s.id); return n; })}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-100 text-emerald-700 transition-colors">
-                    <Bell className="h-4 w-4" /> Reminder Set ✓
-                  </button>
-                ) : (
-                  <button onClick={() => setReminders(prev => new Set([...prev, s.id]))}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-sm bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors">
-                    <Bell className="h-4 w-4" /> Set Reminder
-                  </button>
-                )}
+                </div>
+                {joinError && <p className="text-red-300 text-xs mt-2 font-medium">{joinError}</p>}
               </div>
-            ))}
+            </div>
+
+            {/* ─ Upcoming sessions list ─ */}
+            <div>
+              <h2 className="font-bold text-slate-800 text-lg mb-3">Upcoming &amp; Live Sessions</h2>
+              <div className="space-y-4">
+                {data.sessions.map(s => (
+                  <div key={s.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between hover:shadow-md transition-all">
+                    <div className="flex items-start gap-4">
+                      <div className={`h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-xl ${s.isLive ? 'bg-red-100' : 'bg-slate-100'}`}>
+                        <PlayCircle className={`h-6 w-6 ${s.isLive ? 'text-red-500' : 'text-slate-400'}`} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          {s.isLive && <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">● LIVE</span>}
+                          <h3 className="font-bold text-slate-800">{s.title}</h3>
+                        </div>
+                        <p className="text-sm text-slate-500">{s.teacher} • <span className="text-indigo-500 font-medium">{s.subject}</span></p>
+                        <p className="text-xs text-slate-400 mt-0.5">🕐 {s.time} • 👥 {s.students} students</p>
+                      </div>
+                    </div>
+                    {s.isLive ? (
+                      <button
+                        onClick={() => {
+                          const code = prompt('Enter the meeting code provided by your teacher:');
+                          if (code?.trim()) navigate(`/meeting/${code.trim().toUpperCase()}`);
+                        }}
+                        className="flex-shrink-0 px-5 py-2.5 rounded-xl font-bold text-sm bg-red-500 hover:bg-red-600 text-white shadow-sm transition-colors flex items-center gap-2">
+                        <Wifi className="h-4 w-4" /> Join Now
+                      </button>
+                    ) : reminders.has(s.id) ? (
+                      <button onClick={() => setReminders(prev => { const n = new Set(prev); n.delete(s.id); return n; })}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-100 text-emerald-700 transition-colors">
+                        <Bell className="h-4 w-4" /> Reminder Set ✓
+                      </button>
+                    ) : (
+                      <button onClick={() => setReminders(prev => new Set([...prev, s.id]))}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-sm bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors">
+                        <Bell className="h-4 w-4" /> Set Reminder
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
