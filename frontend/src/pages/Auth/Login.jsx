@@ -113,17 +113,17 @@ const Login = () => {
 
         {/* Decorative zigzag left */}
         <div className="absolute left-6 top-1/3 hidden lg:flex flex-col gap-1 opacity-40">
-          {[0,1,2].map(i => (
-            <svg key={i} width="24" height="10" viewBox="0 0 24 10"><path d="M0 5 L6 0 L12 5 L18 0 L24 5" stroke="#8b5cf6" strokeWidth="2" fill="none"/></svg>
+          {[0, 1, 2].map(i => (
+            <svg key={i} width="24" height="10" viewBox="0 0 24 10"><path d="M0 5 L6 0 L12 5 L18 0 L24 5" stroke="#8b5cf6" strokeWidth="2" fill="none" /></svg>
           ))}
         </div>
         {/* Decorative plus center-top */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 hidden lg:block opacity-30">
-          <svg width="28" height="28" viewBox="0 0 28 28"><line x1="14" y1="0" x2="14" y2="28" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/><line x1="0" y1="14" x2="28" y2="14" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round"/></svg>
+          <svg width="28" height="28" viewBox="0 0 28 28"><line x1="14" y1="0" x2="14" y2="28" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" /><line x1="0" y1="14" x2="28" y2="14" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" /></svg>
         </div>
         {/* Decorative drops */}
         <div className="absolute top-1/4 right-[44%] hidden lg:flex flex-wrap gap-1 w-12 opacity-40">
-          {[...Array(9)].map((_,i) => <div key={i} className="w-1.5 h-2.5 bg-sky-400 rounded-full" />)}
+          {[...Array(9)].map((_, i) => <div key={i} className="w-1.5 h-2.5 bg-sky-400 rounded-full" />)}
         </div>
 
         <div className="max-w-7xl mx-auto px-5 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-0 items-center" style={{ minHeight: '88vh' }}>
@@ -169,7 +169,7 @@ const Login = () => {
               style={{
                 width: '340px',
                 height: '440px',
-                background: 'linear-gradient(145deg, #4c1d95, #3730a3)',
+                background: 'linear-gradient(145deg, #4930a7ff, #3730a3)',
                 borderRadius: '60% 40% 40% 60% / 50% 50% 50% 50%',
                 zIndex: 0,
               }}
@@ -221,8 +221,8 @@ const Login = () => {
               <div className="flex items-center gap-4">
                 <div className="relative w-12 h-12 flex-shrink-0">
                   <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                    <circle cx="18" cy="18" r="14" fill="none" stroke="#f1f5f9" strokeWidth="5"/>
-                    <circle cx="18" cy="18" r="14" fill="none" stroke="#f59e0b" strokeWidth="5" strokeDasharray="88 12" strokeLinecap="round"/>
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#f1f5f9" strokeWidth="5" />
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#f59e0b" strokeWidth="5" strokeDasharray="88 12" strokeLinecap="round" />
                   </svg>
                   <span className="absolute inset-0 flex items-center justify-center text-[9px] font-extrabold text-slate-700">9/10</span>
                 </div>
@@ -348,7 +348,7 @@ const Login = () => {
       </section>
 
       {/* ── SITEMAP / LINKS SECTION ───────────────────────── */}
-      <section style={{ background: '#faf7f2' }} className="py-16">
+      <section style={{ background: '#ffffffff' }} className="py-16">
         <div className="max-w-7xl mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
 
