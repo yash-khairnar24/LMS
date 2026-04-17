@@ -48,7 +48,7 @@ const DashboardRouter = () => {
   if (user.role === 'teacher') {
     return <Navigate to="/teacher" />;
   } else if (user.role === 'business') {
-    return <Navigate to="/business" />;
+    
   } else {
     return <Navigate to="/student" />;
   }
