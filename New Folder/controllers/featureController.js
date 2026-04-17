@@ -202,3 +202,65 @@ exports.createAssignment = async (req, res) => {
     res.status(500).json({ message: 'Server error creating assignment', error: error.message, sqlMessage: error.sqlMessage });
   }
 };
+
+// --- TEACHER: Get My Materials ---
+exports.getTeacherMaterials = async (req, res) => {
+  const teacher_id = req.user.id;
+  try {
+    const [materials] = await db.execute(`
+      SELECT m.id, m.title, m.file_path, m.file_type, m.created_at, c.class_name
+      FROM materials m
+      JOIN classes c ON m.class_id = c.id
+      WHERE c.teacher_id = ?
+      ORDER BY m.created_at DESC
+    `, [teacher_id]);
+    res.status(200).json({ materials });
+  } catch (error) {
+    console.error('Get teacher materials error:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// --- TEACHER: Get My Assignments (with submission stats) ---
+exports.getTeacherAssignments = async (req, res) => {
+  const teacher_id = req.user.id;
+  try {
+    const [assignments] = await db.execute(`
+      SELECT a.id, a.title, a.due_date, a.max_marks, a.created_at,
+             c.class_name,
+             COUNT(s.id) as submission_count
+      FROM assignments a
+      JOIN classes c ON a.class_id = c.id
+      LEFT JOIN assignment_submissions s ON a.id = s.assignment_id
+      WHERE c.teacher_id = ?
+      GROUP BY a.id
+      ORDER BY a.due_date ASC
+    `, [teacher_id]);
+    res.status(200).json({ assignments });
+  } catch (error) {
+    console.error('Get teacher assignments error:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// --- TEACHER: Smart Test — Student Scores ---
+exports.getSmartTestResults = async (req, res) => {
+  const teacher_id = req.user.id;
+  try {
+    const [results] = await db.execute(`
+      SELECT a.title as assignment_title, c.class_name,
+             u.name as student_name, s.score, a.max_marks,
+             s.status, s.submitted_at
+      FROM assignment_submissions s
+      JOIN assignments a ON s.assignment_id = a.id
+      JOIN classes c ON a.class_id = c.id
+      JOIN users u ON s.student_id = u.id
+      WHERE c.teacher_id = ? AND s.status = 'graded'
+      ORDER BY s.submitted_at DESC
+    `, [teacher_id]);
+    res.status(200).json({ results });
+  } catch (error) {
+    console.error('Get smart test results error:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

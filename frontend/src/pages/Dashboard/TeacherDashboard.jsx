@@ -49,13 +49,40 @@ const TeacherDashboard = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Teacher Panel State
+  const [teacherPanel, setTeacherPanel] = useState(null); // null | 'materials' | 'assignments' | 'smarttest'
+  const [teacherMaterials, setTeacherMaterials] = useState([]);
+  const [teacherAssignments, setTeacherAssignments] = useState([]);
+  const [smartTestResults, setSmartTestResults] = useState([]);
+  const [panelLoading, setPanelLoading] = useState(false);
+
+  const openTeacherPanel = async (type) => {
+    setSidebarOpen(false);
+    setTeacherPanel(type);
+    setPanelLoading(true);
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      if (type === 'materials') {
+        const res = await axios.get('http://localhost:5000/api/features/teacher/materials', { headers });
+        setTeacherMaterials(res.data.materials);
+      } else if (type === 'assignments') {
+        const res = await axios.get('http://localhost:5000/api/features/teacher/assignments', { headers });
+        setTeacherAssignments(res.data.assignments);
+      } else if (type === 'smarttest') {
+        const res = await axios.get('http://localhost:5000/api/features/teacher/smart-test', { headers });
+        setSmartTestResults(res.data.results);
+      }
+    } catch (err) { console.error(err); }
+    finally { setPanelLoading(false); }
+  };
+
   const sidebarLinks = [
     { label: 'Dashboard', icon: LayoutDashboard, bg: 'bg-indigo-50', color: 'text-indigo-600', action: () => setSidebarOpen(false) },
     { label: 'My Classes', icon: GraduationCap, bg: 'bg-purple-50', color: 'text-purple-600', action: () => setSidebarOpen(false) },
     { label: 'Live Sessions', icon: PlayCircle, bg: 'bg-rose-50', color: 'text-rose-500', action: () => setSidebarOpen(false) },
-    { label: 'Study Material', icon: BookOpen, bg: 'bg-blue-50', color: 'text-blue-500', action: () => setSidebarOpen(false) },
-    { label: 'Assignments', icon: ClipboardCheck, bg: 'bg-purple-50', color: 'text-purple-500', action: () => setSidebarOpen(false) },
-    { label: 'Smart Test', icon: Clock, bg: 'bg-emerald-50', color: 'text-emerald-500', action: () => setSidebarOpen(false) },
+    { label: 'Study Material', icon: BookOpen, bg: 'bg-blue-50', color: 'text-blue-500', action: () => openTeacherPanel('materials') },
+    { label: 'Assignments', icon: ClipboardCheck, bg: 'bg-purple-50', color: 'text-purple-500', action: () => openTeacherPanel('assignments') },
+    { label: 'Smart Test', icon: Clock, bg: 'bg-emerald-50', color: 'text-emerald-500', action: () => openTeacherPanel('smarttest') },
     { label: 'Advertisements', icon: Megaphone, bg: 'bg-amber-50', color: 'text-amber-500', action: () => { setSidebarOpen(false); navigate('/teacher/advertisements'); } },
     ...(user?.isAdmin ? [{
       label: 'Admin Approvals',
@@ -669,6 +696,168 @@ const TeacherDashboard = () => {
         </div>
       )}
       )
+      {/* ══ Teacher Panel Modal ══ */}
+      {teacherPanel && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-start justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl my-6">
+            {/* Header */}
+            <div className={`p-6 rounded-t-2xl flex justify-between items-center ${
+              teacherPanel === 'materials' ? 'bg-gradient-to-r from-blue-600 to-cyan-600' :
+              teacherPanel === 'assignments' ? 'bg-gradient-to-r from-purple-600 to-indigo-600' :
+              'bg-gradient-to-r from-emerald-600 to-teal-600'
+            }`}>
+              <div>
+                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-0.5">Teacher View</p>
+                <h2 className="text-2xl font-bold text-white">
+                  {teacherPanel === 'materials' && '📚 Study Materials'}
+                  {teacherPanel === 'assignments' && '📋 Assignments'}
+                  {teacherPanel === 'smarttest' && '🎯 Smart Test Results'}
+                </h2>
+              </div>
+              <button onClick={() => setTeacherPanel(null)} className="text-white/70 hover:text-white bg-white/20 rounded-full p-1.5">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {panelLoading ? (
+                <div className="text-center py-16">
+                  <div className="inline-block h-10 w-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="mt-4 text-slate-500 font-medium">Loading...</p>
+                </div>
+              ) : (
+                <>
+                  {/* ── STUDY MATERIALS ── */}
+                  {teacherPanel === 'materials' && (
+                    <div>
+                      {teacherMaterials.length === 0 ? (
+                        <div className="text-center py-16 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                          <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                          <p className="text-slate-500 font-medium">No materials uploaded yet. Use "Upload Material" from Quick Actions!</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {teacherMaterials.map(m => (
+                            <div key={m.id} className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-2xl p-4">
+                              <div className="flex items-center gap-4">
+                                <div className="bg-blue-600 text-white rounded-xl p-3">
+                                  <BookOpen className="h-5 w-5" />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-slate-800">{m.title}</p>
+                                  <p className="text-xs text-slate-500 mt-0.5">{m.class_name} · {new Date(m.created_at).toLocaleDateString()}</p>
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold mt-1 inline-block">{m.file_type || 'File'}</span>
+                                </div>
+                              </div>
+                              <a href={`http://localhost:5000${m.file_path}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-xl transition-colors">
+                                Download ↓
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── ASSIGNMENTS ── */}
+                  {teacherPanel === 'assignments' && (
+                    <div>
+                      {teacherAssignments.length === 0 ? (
+                        <div className="text-center py-16 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                          <ClipboardCheck className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                          <p className="text-slate-500 font-medium">No assignments created yet. Use "Schedule Class" from Quick Actions!</p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                          <table className="w-full text-sm">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                              <tr>
+                                <th className="text-left px-5 py-3 font-bold text-slate-600">Title</th>
+                                <th className="text-left px-5 py-3 font-bold text-slate-600">Class</th>
+                                <th className="text-left px-5 py-3 font-bold text-slate-600">Due Date</th>
+                                <th className="text-center px-5 py-3 font-bold text-slate-600">Max Marks</th>
+                                <th className="text-center px-5 py-3 font-bold text-slate-600">Submissions</th>
+                                <th className="text-left px-5 py-3 font-bold text-slate-600">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {teacherAssignments.map(a => {
+                                const overdue = new Date(a.due_date) < new Date();
+                                return (
+                                  <tr key={a.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                    <td className="px-5 py-3 font-semibold text-slate-800">{a.title}</td>
+                                    <td className="px-5 py-3 text-slate-600">{a.class_name}</td>
+                                    <td className="px-5 py-3 text-slate-600">{new Date(a.due_date).toLocaleDateString()}</td>
+                                    <td className="px-5 py-3 text-center font-bold text-slate-800">{a.max_marks}</td>
+                                    <td className="px-5 py-3 text-center">
+                                      <span className="bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-full text-xs">{a.submission_count}</span>
+                                    </td>
+                                    <td className="px-5 py-3">
+                                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${overdue ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                        {overdue ? 'Overdue' : 'Active'}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── SMART TEST RESULTS ── */}
+                  {teacherPanel === 'smarttest' && (
+                    <div>
+                      {smartTestResults.length === 0 ? (
+                        <div className="text-center py-16 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                          <Clock className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                          <p className="text-slate-500 font-medium">No graded submissions yet. Grade student assignments to see scores here.</p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                          <table className="w-full text-sm">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                              <tr>
+                                <th className="text-left px-5 py-3 font-bold text-slate-600">Student</th>
+                                <th className="text-left px-5 py-3 font-bold text-slate-600">Assignment</th>
+                                <th className="text-left px-5 py-3 font-bold text-slate-600">Class</th>
+                                <th className="text-center px-5 py-3 font-bold text-slate-600">Score</th>
+                                <th className="text-center px-5 py-3 font-bold text-slate-600">Percentage</th>
+                                <th className="text-left px-5 py-3 font-bold text-slate-600">Submitted</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {smartTestResults.map((r, i) => {
+                                const pct = r.max_marks ? Math.round((r.score / r.max_marks) * 100) : 0;
+                                return (
+                                  <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                    <td className="px-5 py-3 font-semibold text-slate-800">{r.student_name}</td>
+                                    <td className="px-5 py-3 text-slate-600">{r.assignment_title}</td>
+                                    <td className="px-5 py-3 text-slate-600">{r.class_name}</td>
+                                    <td className="px-5 py-3 text-center font-bold text-slate-800">{r.score}/{r.max_marks}</td>
+                                    <td className="px-5 py-3 text-center">
+                                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${pct >= 75 ? 'bg-emerald-100 text-emerald-700' : pct >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>
+                                        {pct}%
+                                      </span>
+                                    </td>
+                                    <td className="px-5 py-3 text-slate-500">{new Date(r.submitted_at).toLocaleDateString()}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ══ Quick Actions Global Modals ══ */}
 

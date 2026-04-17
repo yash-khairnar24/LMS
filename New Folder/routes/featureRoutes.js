@@ -34,4 +34,9 @@ router.get('/assignments', featureController.getAssignments);
 router.post('/materials', isTeacher, upload.single('file'), featureController.uploadMaterial);
 router.post('/assignments', isTeacher, featureController.createAssignment);
 
+// Teacher reading endpoints
+router.get('/teacher/materials', isTeacher, featureController.getTeacherMaterials);
+router.get('/teacher/assignments', isTeacher, featureController.getTeacherAssignments);
+router.get('/teacher/smart-test', isTeacher, featureController.getSmartTestResults);
+
 module.exports = router;
