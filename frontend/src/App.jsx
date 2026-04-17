@@ -44,6 +44,7 @@ const DashboardRouter = () => {
     return <Navigate to="/teacher" />;
   } else if (user.role === 'business') {
     return <Navigate to="/join" />;
+    return <Navigate to="/business" />;
   } else {
     return <Navigate to="/student" />;
   }
@@ -83,6 +84,7 @@ function App() {
           } />
 
           <Route path="/business/*" element={
+            <PrivateRoute>
               <RoleRoute roleRequired="business">
                 <BusinessDashboard />
               </RoleRoute>

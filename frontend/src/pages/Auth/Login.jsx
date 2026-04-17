@@ -176,11 +176,23 @@ const Login = () => {
             />
 
             {/* Student image — rounded corners */}
-            <div style={{ position: 'absolute', bottom: 0, right: '30px', height: '82%', width: 'auto', zIndex: 10, borderRadius: '24px', overflow: 'hidden' }}>
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: '30px',
+                width: 'calc(100% - 60px)',
+                maxWidth: '640px',
+                aspectRatio: '16 / 10',
+                zIndex: 10,
+                borderRadius: '24px',
+                overflow: 'hidden',
+              }}
+            >
               <img
-                src="https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/page/search-creative-images/cta/student-laptop-choose-dell-scp-2800.png?fmt=png-alpha&wid=900&hei=600"
+                src="https://images.pexels.com/photos/8419500/pexels-photo-8419500.jpeg"
                 alt="Student with laptop"
-                style={{ height: '100%', width: 'auto', objectFit: 'contain', display: 'block' }}
+                style={{ height: '100%', width: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }}
                 className="drop-shadow-2xl"
               />
             </div>
@@ -198,7 +210,7 @@ const Login = () => {
             </div>
 
             {/* Score and Solution card — top left of image */}
-            <div className="absolute z-30 bg-white rounded-2xl shadow-2xl p-4" style={{ top: '12%', left: '-20px', minWidth: '200px' }}>
+            <div className="absolute z-30 bg-white rounded-2xl shadow-2xl p-4" style={{ top: '12%', left: '10px', minWidth: '200px' }}>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
                   <span className="text-[10px] font-extrabold text-violet-600">Q</span>
