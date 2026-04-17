@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link, useLocation } from 'react-router-dom';
 import {
   BookOpen, AlertCircle, X, PlayCircle, ClipboardCheck,
   MessageSquareText, Clock, Users, CheckCircle,
@@ -29,7 +29,8 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const location = useLocation();
+  const [showModal, setShowModal] = useState(location.pathname === '/login');
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

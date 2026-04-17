@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
@@ -18,7 +18,12 @@ import BusinessDashboard from './pages/Dashboard/BusinessDashboard';
 
 const PrivateRoute = ({ children }) => {
   const { token } = React.useContext(AuthContext);
-  return token ? children : <Navigate to="/login" />;
+  const location = useLocation();
+  if (!token) {
+    // Preserve the intended destination so login can redirect back
+    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+  return children;
 };
 
 const RoleRoute = ({ children, roleRequired }) => {
@@ -34,7 +39,7 @@ const AdminRoute = ({ children }) => {
 
 const DashboardRouter = () => {
   const { user } = React.useContext(AuthContext);
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <Login />;
 
   if (user.isAdmin || user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
     return <Navigate to="/admin/advertisements" />;
@@ -43,7 +48,7 @@ const DashboardRouter = () => {
   if (user.role === 'teacher') {
     return <Navigate to="/teacher" />;
   } else if (user.role === 'business') {
-    return <Navigate to="/join" />;
+    return <Navigate to="/business" />;
   } else {
     return <Navigate to="/student" />;
   }
@@ -83,6 +88,7 @@ function App() {
           } />
 
           <Route path="/business/*" element={
+            <PrivateRoute>
               <RoleRoute roleRequired="business">
                 <BusinessDashboard />
               </RoleRoute>
@@ -124,9 +130,9 @@ function App() {
             </PrivateRoute>
           } />
 
-          {/* Public join page – enter code to join a meeting */}
-          <Route path="/join" element={<JoinMeeting />} />
-          <Route path="/join/:code" element={<JoinMeeting />} />
+          {/* Join meeting – must be logged in first */}
+          <Route path="/join" element={<PrivateRoute><JoinMeeting /></PrivateRoute>} />
+          <Route path="/join/:code" element={<PrivateRoute><JoinMeeting /></PrivateRoute>} />
 
           {/* Meeting room – authenticated users only */}
           <Route path="/meeting/:code" element={

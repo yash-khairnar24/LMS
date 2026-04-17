@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const classRoutes = require('./routes/classRoutes');
 const planRoutes = require('./routes/planRoutes');
 const advertisementRoutes = require('./routes/advertisementRoutes');
+const featureRoutes = require('./routes/featureRoutes');
 const { runStartupMigrations } = require('./config/startupMigrations');
 // const uploadRoutes = require('./routes/uploadRoutes');
 
@@ -25,6 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/plans', planRoutes);
 app.use('/api/advertisements', advertisementRoutes);
+app.use('/api/features', featureRoutes);
 // app.use('/api/uploads', uploadRoutes);
 
 // Base route

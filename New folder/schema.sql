@@ -143,3 +143,28 @@ CREATE TABLE IF NOT EXISTS advertisements (
   FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
 );
+
+-- Assignments: Teacher creates assignments for a class
+CREATE TABLE IF NOT EXISTS assignments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  class_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  due_date DATETIME NOT NULL,
+  max_marks INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+);
+
+-- Assignment Submissions: Students submit files for assignments
+CREATE TABLE IF NOT EXISTS assignment_submissions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  assignment_id INT NOT NULL,
+  student_id INT NOT NULL,
+  file_url VARCHAR(255) NOT NULL,
+  score INT,
+  status ENUM('pending', 'submitted', 'graded', 'overdue') DEFAULT 'submitted',
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+);

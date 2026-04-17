@@ -12,14 +12,14 @@ import {
 } from 'lucide-react';
 
 const FEATURES = [
-  { key: 'feature_live_class',     label: 'Live Class',     icon: PlayCircle },
+  { key: 'feature_live_class', label: 'Live Class', icon: PlayCircle },
   { key: 'feature_study_material', label: 'Study Material', icon: BookOpen },
-  { key: 'feature_ask_doubt',      label: 'Ask Doubt',      icon: HelpCircle },
-  { key: 'feature_recording',      label: 'Recording',      icon: Video },
-  { key: 'feature_assignment',     label: 'Assignment',     icon: ClipboardCheck },
-  { key: 'feature_smart_test',     label: 'Smart Test',     icon: Clock },
-  { key: 'feature_chat',           label: 'Chat',           icon: MessageSquareText },
-  { key: 'feature_support',        label: 'Support',        icon: PhoneCall },
+  { key: 'feature_ask_doubt', label: 'Ask Doubt', icon: HelpCircle },
+  { key: 'feature_recording', label: 'Recording', icon: Video },
+  { key: 'feature_assignment', label: 'Assignment', icon: ClipboardCheck },
+  { key: 'feature_smart_test', label: 'Smart Test', icon: Clock },
+  { key: 'feature_chat', label: 'Chat', icon: MessageSquareText },
+  { key: 'feature_support', label: 'Support', icon: PhoneCall },
 ];
 
 const TeacherDashboard = () => {
@@ -33,6 +33,16 @@ const TeacherDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // Quick Actions Global State
+  const [showQuickMeeting, setShowQuickMeeting] = useState(false);
+  const [showQuickMaterial, setShowQuickMaterial] = useState(false);
+  const [showQuickSchedule, setShowQuickSchedule] = useState(false);
+  const [quickClassId, setQuickClassId] = useState('');
+  const [quickTitle, setQuickTitle] = useState('');
+  const [quickFile, setQuickFile] = useState(null);
+  const [quickDate, setQuickDate] = useState('');
+  const [quickMarks, setQuickMarks] = useState('');
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll);
@@ -40,13 +50,13 @@ const TeacherDashboard = () => {
   }, []);
 
   const sidebarLinks = [
-    { label: 'Dashboard',       icon: LayoutDashboard,   bg: 'bg-indigo-50',    color: 'text-indigo-600',   action: () => setSidebarOpen(false) },
-    { label: 'My Classes',      icon: GraduationCap,     bg: 'bg-purple-50',    color: 'text-purple-600',   action: () => setSidebarOpen(false) },
-    { label: 'Live Sessions',   icon: PlayCircle,        bg: 'bg-rose-50',      color: 'text-rose-500',     action: () => setSidebarOpen(false) },
-    { label: 'Study Material',  icon: BookOpen,          bg: 'bg-blue-50',      color: 'text-blue-500',     action: () => setSidebarOpen(false) },
-    { label: 'Assignments',     icon: ClipboardCheck,    bg: 'bg-purple-50',    color: 'text-purple-500',   action: () => setSidebarOpen(false) },
-    { label: 'Smart Test',      icon: Clock,             bg: 'bg-emerald-50',   color: 'text-emerald-500',  action: () => setSidebarOpen(false) },
-    { label: 'Advertisements',  icon: Megaphone,         bg: 'bg-amber-50',     color: 'text-amber-500',    action: () => { setSidebarOpen(false); navigate('/teacher/advertisements'); } },
+    { label: 'Dashboard', icon: LayoutDashboard, bg: 'bg-indigo-50', color: 'text-indigo-600', action: () => setSidebarOpen(false) },
+    { label: 'My Classes', icon: GraduationCap, bg: 'bg-purple-50', color: 'text-purple-600', action: () => setSidebarOpen(false) },
+    { label: 'Live Sessions', icon: PlayCircle, bg: 'bg-rose-50', color: 'text-rose-500', action: () => setSidebarOpen(false) },
+    { label: 'Study Material', icon: BookOpen, bg: 'bg-blue-50', color: 'text-blue-500', action: () => setSidebarOpen(false) },
+    { label: 'Assignments', icon: ClipboardCheck, bg: 'bg-purple-50', color: 'text-purple-500', action: () => setSidebarOpen(false) },
+    { label: 'Smart Test', icon: Clock, bg: 'bg-emerald-50', color: 'text-emerald-500', action: () => setSidebarOpen(false) },
+    { label: 'Advertisements', icon: Megaphone, bg: 'bg-amber-50', color: 'text-amber-500', action: () => { setSidebarOpen(false); navigate('/teacher/advertisements'); } },
     ...(user?.isAdmin ? [{
       label: 'Admin Approvals',
       icon: ShieldCheck,
@@ -54,9 +64,9 @@ const TeacherDashboard = () => {
       color: 'text-slate-700',
       action: () => { setSidebarOpen(false); navigate('/admin/advertisements'); }
     }] : []),
-    { label: 'Chat',            icon: MessageSquareText, bg: 'bg-blue-50',      color: 'text-blue-600',     action: () => setSidebarOpen(false) },
-    { label: 'Schedule',        icon: Calendar,          bg: 'bg-slate-100',    color: 'text-slate-600',    action: () => setSidebarOpen(false) },
-    { label: 'Support',         icon: PhoneCall,         bg: 'bg-fuchsia-50',   color: 'text-fuchsia-500',  action: () => setSidebarOpen(false) },
+    { label: 'Chat', icon: MessageSquareText, bg: 'bg-blue-50', color: 'text-blue-600', action: () => setSidebarOpen(false) },
+    { label: 'Schedule', icon: Calendar, bg: 'bg-slate-100', color: 'text-slate-600', action: () => setSidebarOpen(false) },
+    { label: 'Support', icon: PhoneCall, bg: 'bg-fuchsia-50', color: 'text-fuchsia-500', action: () => setSidebarOpen(false) },
   ];
 
   // Edit / Delete state
@@ -249,20 +259,52 @@ const TeacherDashboard = () => {
   };
 
   const dashboardFeatures = [
-    { title: 'Start Meeting', icon: PlayCircle, bgColor: 'bg-indigo-100', iconColor: 'text-indigo-600', action: () => alert('Feature coming soon!') },
-    { title: 'Upload Material', icon: BookOpen, bgColor: 'bg-emerald-100', iconColor: 'text-emerald-600', action: () => alert('Feature coming soon!') },
+    { title: 'Start Meeting', icon: PlayCircle, bgColor: 'bg-indigo-100', iconColor: 'text-indigo-600', action: () => { setQuickClassId(''); setQuickTitle(''); setShowQuickMeeting(true); } },
+    { title: 'Upload Material', icon: BookOpen, bgColor: 'bg-emerald-100', iconColor: 'text-emerald-600', action: () => { setQuickClassId(''); setQuickTitle(''); setQuickFile(null); setShowQuickMaterial(true); } },
     { title: 'Add Advertise', icon: Bell, bgColor: 'bg-amber-100', iconColor: 'text-amber-600', action: () => navigate('/teacher/advertisements') },
-    { title: 'Schedule Class', icon: Calendar, bgColor: 'bg-rose-100', iconColor: 'text-rose-600', action: () => alert('Feature coming soon!') }
+    { title: 'Schedule Class', icon: Calendar, bgColor: 'bg-rose-100', iconColor: 'text-rose-600', action: () => { setQuickClassId(''); setQuickTitle(''); setQuickDate(''); setQuickMarks(''); setShowQuickSchedule(true); } }
   ];
+
+  // Quick Action Handlers
+  const handleQuickMeeting = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('http://localhost:5000/api/plans/meetings', { class_id: quickClassId, title: quickTitle }, { headers: { Authorization: `Bearer ${token}` } });
+      setShowQuickMeeting(false);
+      alert('Meeting created successfully!');
+    } catch (err) { console.error(err); alert('Failed to create meeting'); }
+  };
+
+  const handleQuickMaterial = async (e) => {
+    e.preventDefault();
+    if (!quickFile) return alert('Please select a file');
+    const formData = new FormData();
+    formData.append('class_id', quickClassId);
+    formData.append('title', quickTitle);
+    formData.append('file', quickFile);
+    try {
+      await axios.post('http://localhost:5000/api/features/materials', formData, { headers: { Authorization: `Bearer ${token}` } });
+      setShowQuickMaterial(false);
+      alert('Material uploaded successfully!');
+    } catch (err) { console.error(err); alert('Failed to upload material'); }
+  };
+
+  const handleQuickSchedule = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('http://localhost:5000/api/features/assignments', { class_id: quickClassId, title: quickTitle, due_date: quickDate, max_marks: quickMarks }, { headers: { Authorization: `Bearer ${token}` } });
+      setShowQuickSchedule(false);
+      alert('Assignment created successfully!');
+    } catch (err) { console.error(err); alert('Failed to create assignment'); }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 relative pb-10" onClick={() => setActiveDropdown(null)}>
       <nav
-        className={`sticky top-0 z-20 transition-all duration-300 ${
-          scrolled
+        className={`sticky top-0 z-20 transition-all duration-300 ${scrolled
             ? 'bg-indigo-600/70 backdrop-blur-md shadow-lg border-b border-indigo-400/40'
             : 'bg-indigo-600 shadow-lg'
-        }`}
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -626,6 +668,102 @@ const TeacherDashboard = () => {
           </div>
         </div>
       )}
+      )
+
+      {/* ══ Quick Actions Global Modals ══ */}
+
+      {/* Start Meeting Modal */}
+      {showQuickMeeting && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="text-xl font-bold text-slate-800">Start Meeting</h3>
+              <button onClick={() => setShowQuickMeeting(false)} className="text-slate-400 hover:text-slate-800"><X className="w-6 h-6" /></button>
+            </div>
+            <form onSubmit={handleQuickMeeting} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">Select Class</label>
+                <select required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={quickClassId} onChange={e => setQuickClassId(e.target.value)}>
+                  <option value="">-- Choose Class --</option>
+                  {classes.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">Meeting Topic</label>
+                <input required type="text" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={quickTitle} onChange={e => setQuickTitle(e.target.value)} />
+              </div>
+              <button type="submit" className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold">Generate Code</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Material Modal */}
+      {showQuickMaterial && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="text-xl font-bold text-slate-800">Upload Material</h3>
+              <button onClick={() => setShowQuickMaterial(false)} className="text-slate-400 hover:text-slate-800"><X className="w-6 h-6" /></button>
+            </div>
+            <form onSubmit={handleQuickMaterial} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">Select Class</label>
+                <select required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={quickClassId} onChange={e => setQuickClassId(e.target.value)}>
+                  <option value="">-- Choose Class --</option>
+                  {classes.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">Title</label>
+                <input required type="text" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={quickTitle} onChange={e => setQuickTitle(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">File</label>
+                <input required type="file" className="w-full" onChange={e => setQuickFile(e.target.files[0])} />
+              </div>
+              <button type="submit" className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold">Upload</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Class Modal */}
+      {showQuickSchedule && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="text-xl font-bold text-slate-800">Schedule Assignment</h3>
+              <button onClick={() => setShowQuickSchedule(false)} className="text-slate-400 hover:text-slate-800"><X className="w-6 h-6" /></button>
+            </div>
+            <form onSubmit={handleQuickSchedule} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">Select Class</label>
+                <select required className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={quickClassId} onChange={e => setQuickClassId(e.target.value)}>
+                  <option value="">-- Choose Class --</option>
+                  {classes.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">Assignment Title</label>
+                <input required type="text" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={quickTitle} onChange={e => setQuickTitle(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Due Date</label>
+                  <input required type="datetime-local" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={quickDate} onChange={e => setQuickDate(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Max Marks</label>
+                  <input required type="number" min="1" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none" value={quickMarks} onChange={e => setQuickMarks(e.target.value)} />
+                </div>
+              </div>
+              <button type="submit" className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold">Schedule Assignment</button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* ── Sidebar Overlay ── */}
       {sidebarOpen && (
         <div

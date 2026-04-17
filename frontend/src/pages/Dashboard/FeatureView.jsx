@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { AuthContext } from '../../context/AuthContext';
 import {
   ArrowLeft, PlayCircle, BookOpen, HelpCircle, Video,
   ClipboardCheck, Clock, MessageSquareText, PhoneCall,
@@ -105,7 +107,44 @@ const SAMPLE_QUESTIONS = [
 const FeatureView = () => {
   const { type } = useParams();
   const navigate = useNavigate();
-  const data = DUMMY[type];
+  const { token } = React.useContext(AuthContext);
+
+  const [dynamicData, setDynamicData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    const fetchDynamicData = async () => {
+      setLoading(true);
+      try {
+        let endpoint = '';
+        if (type === 'live-class') endpoint = '/api/features/live-classes';
+        else if (type === 'study-material') endpoint = '/api/features/study-materials';
+        else if (type === 'recording') endpoint = '/api/features/recordings';
+        else if (type === 'assignment') endpoint = '/api/features/assignments';
+        
+        if (endpoint) {
+          const res = await axios.get(`http://localhost:5000${endpoint}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (type === 'live-class') setDynamicData({ ...DUMMY[type], sessions: res.data.sessions });
+          else if (type === 'study-material') setDynamicData({ ...DUMMY[type], materials: res.data.materials });
+          else if (type === 'recording') setDynamicData({ ...DUMMY[type], recordings: res.data.recordings });
+          else if (type === 'assignment') setDynamicData({ ...DUMMY[type], assignments: res.data.assignments });
+        } else {
+          setDynamicData(DUMMY[type]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch dynamic data', err);
+        setDynamicData(DUMMY[type]); // fallback to dummy on error
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDynamicData();
+  }, [type, token]);
+
+  const data = dynamicData || DUMMY[type];
 
   // Ask Doubt
   const [doubtText, setDoubtText]       = useState('');
@@ -209,6 +248,12 @@ const FeatureView = () => {
     setTicketIssue(''); setShowTicketForm(false);
     setTicketPosted(true); setTimeout(() => setTicketPosted(false), 3000);
   };
+
+  if (loading && !dynamicData) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+    </div>
+  );
 
   if (!data) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center flex-col gap-4">
