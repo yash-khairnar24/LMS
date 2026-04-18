@@ -65,7 +65,7 @@ const AdminAdvertisementsPage = () => {
               <ShieldCheck className="h-5 w-5 text-emerald-400" />
               <div>
                 <p className="text-white font-bold text-lg leading-none">Admin Advertisement Panel</p>
-                <p className="text-slate-300 text-xs mt-1">Hardcoded admin: {ADMIN_EMAIL}</p>
+                <p className="text-slate-300 text-xs mt-1">Admin: {ADMIN_EMAIL}</p>
               </div>
             </div>
           </div>
@@ -91,11 +91,10 @@ const AdminAdvertisementsPage = () => {
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-bold capitalize ${
-                    statusFilter === status
+                  className={`px-3 py-1.5 rounded-lg text-sm font-bold capitalize ${statusFilter === status
                       ? 'bg-indigo-600 text-white'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                    }`}
                 >
                   {status}
                 </button>
@@ -118,17 +117,23 @@ const AdminAdvertisementsPage = () => {
                         By {req.teacher_name} ({req.teacher_email})
                       </p>
                     </div>
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-bold capitalize w-fit ${
-                        req.status === 'approved'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : req.status === 'rejected'
-                          ? 'bg-rose-100 text-rose-700'
-                          : 'bg-amber-100 text-amber-700'
-                      }`}
-                    >
-                      {req.status}
-                    </span>
+                    <div className="flex flex-col items-end gap-2">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold capitalize w-fit ${req.status === 'approved'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : req.status === 'rejected'
+                              ? 'bg-rose-100 text-rose-700'
+                              : 'bg-amber-100 text-amber-700'
+                          }`}
+                      >
+                        {req.status}
+                      </span>
+                      {req.payment_status === 'completed' && (
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold w-fit bg-blue-100 text-blue-700">
+                          Payment Verified
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <p className="text-sm text-slate-600 mb-3">{req.description}</p>

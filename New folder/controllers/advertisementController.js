@@ -12,6 +12,7 @@ const ensureAdvertisementsTable = async () => {
       button_text VARCHAR(100) DEFAULT 'Learn More',
       button_link VARCHAR(500) DEFAULT NULL,
       status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+      payment_status VARCHAR(20) DEFAULT 'pending' CHECK (payment_status IN ('pending', 'completed')),
       approved_by INT NULL,
       approved_at TIMESTAMP NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -19,6 +20,14 @@ const ensureAdvertisementsTable = async () => {
       FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
     )
   `);
+  
+  // Safely add payment_status if table already exists from previous migrations
+  try {
+    await db.query(`ALTER TABLE advertisements ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'completed' CHECK (payment_status IN ('pending', 'completed'))`);
+  } catch (err) {
+    console.error('Error adding payment_status column:', err.message);
+  }
+
   await db.query(`CREATE INDEX IF NOT EXISTS idx_ads_status ON advertisements(status)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_ads_teacher ON advertisements(teacher_id)`);
 };
@@ -35,8 +44,8 @@ exports.createRequest = async (req, res) => {
     await ensureAdvertisementsTable();
 
     const { rows } = await db.query(
-      `INSERT INTO advertisements (teacher_id, title, description, button_text, button_link, status)
-       VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING id`,
+      `INSERT INTO advertisements (teacher_id, title, description, button_text, button_link, status, payment_status)
+       VALUES ($1, $2, $3, $4, $5, 'pending', 'completed') RETURNING id`,
       [
         teacherId,
         title.trim(),
@@ -60,7 +69,7 @@ exports.getMyRequests = async (req, res) => {
     await ensureAdvertisementsTable();
 
     const { rows: requests } = await db.query(
-      `SELECT id, title, description, button_text, button_link, status, created_at, approved_at
+      `SELECT id, title, description, button_text, button_link, status, payment_status, created_at, approved_at
        FROM advertisements
        WHERE teacher_id = $1
        ORDER BY created_at DESC`,
@@ -82,7 +91,7 @@ exports.getAdminRequests = async (req, res) => {
 
     let query = `
       SELECT
-        a.id, a.title, a.description, a.button_text, a.button_link, a.status, a.created_at, a.approved_at,
+        a.id, a.title, a.description, a.button_text, a.button_link, a.status, a.payment_status, a.created_at, a.approved_at,
         u.name AS teacher_name, u.email AS teacher_email
       FROM advertisements a
       JOIN users u ON u.id = a.teacher_id

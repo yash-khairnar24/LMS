@@ -135,6 +135,7 @@ CREATE TABLE IF NOT EXISTS advertisements (
   button_text VARCHAR(100) DEFAULT 'Learn More',
   button_link VARCHAR(500) DEFAULT NULL,
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  payment_status VARCHAR(20) DEFAULT 'pending' CHECK (payment_status IN ('pending', 'completed')),
   approved_by INT NULL,
   approved_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
