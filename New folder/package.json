@@ -4,6 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "db:init": "node init_db.js",
+    "db:migrate": "node update_enum.js",
+    "db:seed": "node seed.js",
+    "db:setup": "npm run db:init && npm run db:migrate",
     "start": "node server.js",
     "start:dev": "nodemon server.js",
     "dev": "nodemon server.js"
