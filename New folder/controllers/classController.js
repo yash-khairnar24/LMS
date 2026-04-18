@@ -12,14 +12,14 @@ exports.createClass = async (req, res) => {
   }
 
   try {
-    const [result] = await db.execute(
-      'INSERT INTO classes (teacher_id, class_name, description) VALUES (?, ?, ?)',
+    const { rows } = await db.query(
+      'INSERT INTO classes (teacher_id, class_name, description) VALUES ($1, $2, $3) RETURNING id',
       [teacher_id, class_name, description || '']
     );
 
     res.status(201).json({
       message: 'Class created successfully',
-      classId: result.insertId
+      classId: rows[0].id
     });
   } catch (error) {
     console.error('Create class error:', error);
@@ -32,11 +32,11 @@ exports.getTeacherClasses = async (req, res) => {
   const teacher_id = req.user.id;
 
   try {
-    const [classes] = await db.execute(`
+    const { rows: classes } = await db.query(`
       SELECT c.*, COUNT(e.id) AS student_count
       FROM classes c
       LEFT JOIN enrollments e ON c.id = e.class_id
-      WHERE c.teacher_id = ?
+      WHERE c.teacher_id = $1
       GROUP BY c.id
       ORDER BY c.created_at DESC
     `, [teacher_id]);
@@ -58,16 +58,16 @@ exports.updateClass = async (req, res) => {
   }
 
   try {
-    const [existing] = await db.execute(
-      'SELECT id FROM classes WHERE id = ? AND teacher_id = ?',
+    const { rows: existing } = await db.query(
+      'SELECT id FROM classes WHERE id = $1 AND teacher_id = $2',
       [classId, teacher_id]
     );
     if (existing.length === 0) {
       return res.status(403).json({ message: 'Not authorized to edit this class' });
     }
 
-    await db.execute(
-      'UPDATE classes SET class_name = ?, description = ? WHERE id = ?',
+    await db.query(
+      'UPDATE classes SET class_name = $1, description = $2 WHERE id = $3',
       [class_name, description || '', classId]
     );
 
@@ -84,15 +84,15 @@ exports.deleteClass = async (req, res) => {
   const teacher_id = req.user.id;
 
   try {
-    const [existing] = await db.execute(
-      'SELECT id FROM classes WHERE id = ? AND teacher_id = ?',
+    const { rows: existing } = await db.query(
+      'SELECT id FROM classes WHERE id = $1 AND teacher_id = $2',
       [classId, teacher_id]
     );
     if (existing.length === 0) {
       return res.status(403).json({ message: 'Not authorized to delete this class' });
     }
 
-    await db.execute('DELETE FROM classes WHERE id = ?', [classId]);
+    await db.query('DELETE FROM classes WHERE id = $1', [classId]);
 
     res.status(200).json({ message: 'Class deleted successfully' });
   } catch (error) {
@@ -106,7 +106,7 @@ exports.deleteClass = async (req, res) => {
 // Get all classes to browse
 exports.getAllClasses = async (req, res) => {
   try {
-    const [classes] = await db.execute(`
+    const { rows: classes } = await db.query(`
       SELECT c.*, u.name as teacher_name 
       FROM classes c
       JOIN users u ON c.teacher_id = u.id
@@ -125,8 +125,8 @@ exports.enrollClass = async (req, res) => {
   const student_id = req.user.id;
 
   try {
-    const [existing] = await db.execute(
-      'SELECT id FROM enrollments WHERE student_id = ? AND class_id = ?',
+    const { rows: existing } = await db.query(
+      'SELECT id FROM enrollments WHERE student_id = $1 AND class_id = $2',
       [student_id, class_id]
     );
 
@@ -134,8 +134,8 @@ exports.enrollClass = async (req, res) => {
       return res.status(400).json({ message: 'Already enrolled in this class' });
     }
 
-    await db.execute(
-      'INSERT INTO enrollments (student_id, class_id) VALUES (?, ?)',
+    await db.query(
+      'INSERT INTO enrollments (student_id, class_id) VALUES ($1, $2)',
       [student_id, class_id]
     );
 
@@ -151,12 +151,12 @@ exports.getStudentClasses = async (req, res) => {
   const student_id = req.user.id;
 
   try {
-    const [classes] = await db.execute(`
+    const { rows: classes } = await db.query(`
       SELECT c.*, u.name as teacher_name 
       FROM classes c
       JOIN enrollments e ON c.id = e.class_id
       JOIN users u ON c.teacher_id = u.id
-      WHERE e.student_id = ?
+      WHERE e.student_id = $1
       ORDER BY e.created_at DESC
     `, [student_id]);
     
@@ -174,11 +174,11 @@ exports.getClassDetails = async (req, res) => {
   const classId = req.params.id;
 
   try {
-    const [classes] = await db.execute(`
+    const { rows: classes } = await db.query(`
       SELECT c.*, u.name as teacher_name 
       FROM classes c
       JOIN users u ON c.teacher_id = u.id
-      WHERE c.id = ?
+      WHERE c.id = $1
     `, [classId]);
 
     if (classes.length === 0) {

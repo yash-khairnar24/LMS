@@ -6,8 +6,8 @@ const db = require('../config/db');
 exports.getPlans = async (req, res) => {
   const { classId } = req.params;
   try {
-    const [plans] = await db.execute(
-      'SELECT * FROM plans WHERE class_id = ? ORDER BY price ASC',
+    const { rows: plans } = await db.query(
+      'SELECT * FROM plans WHERE class_id = $1 ORDER BY price ASC',
       [classId]
     );
     res.status(200).json({ plans });
@@ -31,16 +31,19 @@ exports.createPlan = async (req, res) => {
   if (!name) return res.status(400).json({ message: 'Plan name is required' });
 
   try {
-    // Ensure class belongs to teacher
-    const [cls] = await db.execute('SELECT id FROM classes WHERE id = ? AND teacher_id = ?', [classId, teacher_id]);
+    const { rows: cls } = await db.query(
+      'SELECT id FROM classes WHERE id = $1 AND teacher_id = $2',
+      [classId, teacher_id]
+    );
     if (cls.length === 0) return res.status(403).json({ message: 'Not authorized' });
 
-    const [result] = await db.execute(
+    const { rows } = await db.query(
       `INSERT INTO plans (class_id, name, price,
         feature_live_class, feature_study_material, feature_ask_doubt,
         feature_recording, feature_assignment, feature_smart_test,
         feature_chat, feature_support)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       RETURNING id`,
       [
         classId, name, price || 0,
         !!feature_live_class, !!feature_study_material, !!feature_ask_doubt,
@@ -48,7 +51,7 @@ exports.createPlan = async (req, res) => {
         !!feature_chat, feature_support !== false
       ]
     );
-    res.status(201).json({ message: 'Plan created', planId: result.insertId });
+    res.status(201).json({ message: 'Plan created', planId: rows[0].id });
   } catch (err) {
     console.error('Create plan error:', err);
     res.status(500).json({ message: 'Server error creating plan' });
@@ -67,18 +70,18 @@ exports.updatePlan = async (req, res) => {
   } = req.body;
 
   try {
-    const [plan] = await db.execute(
-      'SELECT p.id FROM plans p JOIN classes c ON p.class_id = c.id WHERE p.id = ? AND c.teacher_id = ?',
+    const { rows: plan } = await db.query(
+      'SELECT p.id FROM plans p JOIN classes c ON p.class_id = c.id WHERE p.id = $1 AND c.teacher_id = $2',
       [planId, teacher_id]
     );
     if (plan.length === 0) return res.status(403).json({ message: 'Not authorized' });
 
-    await db.execute(
-      `UPDATE plans SET name=?, price=?,
-        feature_live_class=?, feature_study_material=?, feature_ask_doubt=?,
-        feature_recording=?, feature_assignment=?, feature_smart_test=?,
-        feature_chat=?, feature_support=?
-       WHERE id=?`,
+    await db.query(
+      `UPDATE plans SET name=$1, price=$2,
+        feature_live_class=$3, feature_study_material=$4, feature_ask_doubt=$5,
+        feature_recording=$6, feature_assignment=$7, feature_smart_test=$8,
+        feature_chat=$9, feature_support=$10
+       WHERE id=$11`,
       [
         name, price || 0,
         !!feature_live_class, !!feature_study_material, !!feature_ask_doubt,
@@ -99,13 +102,13 @@ exports.deletePlan = async (req, res) => {
   const teacher_id = req.user.id;
   const { planId } = req.params;
   try {
-    const [plan] = await db.execute(
-      'SELECT p.id FROM plans p JOIN classes c ON p.class_id = c.id WHERE p.id = ? AND c.teacher_id = ?',
+    const { rows: plan } = await db.query(
+      'SELECT p.id FROM plans p JOIN classes c ON p.class_id = c.id WHERE p.id = $1 AND c.teacher_id = $2',
       [planId, teacher_id]
     );
     if (plan.length === 0) return res.status(403).json({ message: 'Not authorized' });
 
-    await db.execute('DELETE FROM plans WHERE id = ?', [planId]);
+    await db.query('DELETE FROM plans WHERE id = $1', [planId]);
     res.status(200).json({ message: 'Plan deleted' });
   } catch (err) {
     console.error('Delete plan error:', err);
@@ -121,31 +124,35 @@ exports.subscribe = async (req, res) => {
   const { plan_id, class_id } = req.body;
 
   try {
-    // Check if already subscribed to this class
-    const [existing] = await db.execute(
-      'SELECT id FROM subscriptions WHERE student_id = ? AND class_id = ?',
+    const { rows: existing } = await db.query(
+      'SELECT id FROM subscriptions WHERE student_id = $1 AND class_id = $2',
       [student_id, class_id]
     );
     if (existing.length > 0) {
       return res.status(400).json({ message: 'Already subscribed to this class' });
     }
 
-    // Verify plan belongs to class
-    const [plan] = await db.execute('SELECT id FROM plans WHERE id = ? AND class_id = ?', [plan_id, class_id]);
+    const { rows: plan } = await db.query(
+      'SELECT id FROM plans WHERE id = $1 AND class_id = $2',
+      [plan_id, class_id]
+    );
     if (plan.length === 0) return res.status(400).json({ message: 'Invalid plan' });
 
-    await db.execute(
-      'INSERT INTO subscriptions (student_id, class_id, plan_id, payment_status) VALUES (?, ?, ?, ?)',
+    await db.query(
+      'INSERT INTO subscriptions (student_id, class_id, plan_id, payment_status) VALUES ($1, $2, $3, $4)',
       [student_id, class_id, plan_id, 'completed']
     );
 
     // Also auto-enroll in class if not already
-    const [enrolled] = await db.execute(
-      'SELECT id FROM enrollments WHERE student_id = ? AND class_id = ?',
+    const { rows: enrolled } = await db.query(
+      'SELECT id FROM enrollments WHERE student_id = $1 AND class_id = $2',
       [student_id, class_id]
     );
     if (enrolled.length === 0) {
-      await db.execute('INSERT INTO enrollments (student_id, class_id) VALUES (?, ?)', [student_id, class_id]);
+      await db.query(
+        'INSERT INTO enrollments (student_id, class_id) VALUES ($1, $2)',
+        [student_id, class_id]
+      );
     }
 
     res.status(201).json({ message: 'Subscription successful' });
@@ -160,14 +167,14 @@ exports.getMySubscription = async (req, res) => {
   const student_id = req.user.id;
   const { classId } = req.params;
   try {
-    const [rows] = await db.execute(
+    const { rows } = await db.query(
       `SELECT s.*, p.name as plan_name, p.price,
         p.feature_live_class, p.feature_study_material, p.feature_ask_doubt,
         p.feature_recording, p.feature_assignment, p.feature_smart_test,
         p.feature_chat, p.feature_support
        FROM subscriptions s
        JOIN plans p ON s.plan_id = p.id
-       WHERE s.student_id = ? AND s.class_id = ?`,
+       WHERE s.student_id = $1 AND s.class_id = $2`,
       [student_id, classId]
     );
     if (rows.length === 0) return res.status(200).json({ subscription: null });
@@ -186,35 +193,35 @@ function generateCode() {
 }
 
 const ensureBusinessMeetingsTable = async () => {
-  await db.execute(`
+  await db.query(`
     CREATE TABLE IF NOT EXISTS business_meetings (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       host_id INT NOT NULL,
       title VARCHAR(255) NOT NULL,
       meeting_code VARCHAR(20) UNIQUE NOT NULL,
       is_active BOOLEAN DEFAULT TRUE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      INDEX idx_business_meetings_host (host_id),
-      INDEX idx_business_meetings_code (meeting_code),
       FOREIGN KEY (host_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_bm_host ON business_meetings(host_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_bm_code ON business_meetings(meeting_code)`);
 };
 
 const ensureBusinessMeetingParticipantsTable = async () => {
-  await db.execute(`
+  await db.query(`
     CREATE TABLE IF NOT EXISTS business_meeting_participants (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       meeting_id INT NOT NULL,
       user_id INT NOT NULL,
       joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE KEY uniq_business_meeting_user (meeting_id, user_id),
-      INDEX idx_bmp_meeting (meeting_id),
-      INDEX idx_bmp_user (user_id),
+      UNIQUE (meeting_id, user_id),
       FOREIGN KEY (meeting_id) REFERENCES business_meetings(id) ON DELETE CASCADE,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_bmp_meeting ON business_meeting_participants(meeting_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_bmp_user ON business_meeting_participants(user_id)`);
 };
 
 const generateUniqueMeetingCode = async () => {
@@ -225,12 +232,12 @@ const generateUniqueMeetingCode = async () => {
     await ensureBusinessMeetingsTable();
     await ensureBusinessMeetingParticipantsTable();
 
-    const [existingClassMeeting] = await db.execute(
-      'SELECT id FROM meetings WHERE meeting_code = ? LIMIT 1',
+    const { rows: existingClassMeeting } = await db.query(
+      'SELECT id FROM meetings WHERE meeting_code = $1 LIMIT 1',
       [code]
     );
-    const [existingBusinessMeeting] = await db.execute(
-      'SELECT id FROM business_meetings WHERE meeting_code = ? LIMIT 1',
+    const { rows: existingBusinessMeeting } = await db.query(
+      'SELECT id FROM business_meetings WHERE meeting_code = $1 LIMIT 1',
       [code]
     );
 
@@ -251,17 +258,20 @@ exports.createMeeting = async (req, res) => {
   try {
     await ensureBusinessMeetingsTable();
 
-    const [cls] = await db.execute('SELECT id FROM classes WHERE id = ? AND teacher_id = ?', [class_id, teacher_id]);
+    const { rows: cls } = await db.query(
+      'SELECT id FROM classes WHERE id = $1 AND teacher_id = $2',
+      [class_id, teacher_id]
+    );
     if (cls.length === 0) return res.status(403).json({ message: 'Not authorized' });
 
     const code = await generateUniqueMeetingCode();
 
-    const [result] = await db.execute(
-      'INSERT INTO meetings (class_id, teacher_id, title, meeting_code) VALUES (?, ?, ?, ?)',
+    const { rows } = await db.query(
+      'INSERT INTO meetings (class_id, teacher_id, title, meeting_code) VALUES ($1, $2, $3, $4) RETURNING id',
       [class_id, teacher_id, title, code]
     );
 
-    res.status(201).json({ message: 'Meeting created', meeting_code: code, meetingId: result.insertId });
+    res.status(201).json({ message: 'Meeting created', meeting_code: code, meetingId: rows[0].id });
   } catch (err) {
     console.error('Create meeting error:', err);
     res.status(500).json({ message: 'Server error creating meeting' });
@@ -272,8 +282,8 @@ exports.createMeeting = async (req, res) => {
 exports.getMeetings = async (req, res) => {
   const { classId } = req.params;
   try {
-    const [meetings] = await db.execute(
-      'SELECT * FROM meetings WHERE class_id = ? ORDER BY created_at DESC',
+    const { rows: meetings } = await db.query(
+      'SELECT * FROM meetings WHERE class_id = $1 ORDER BY created_at DESC',
       [classId]
     );
     res.status(200).json({ meetings });
@@ -293,17 +303,17 @@ exports.joinByCode = async (req, res) => {
     await ensureBusinessMeetingsTable();
     await ensureBusinessMeetingParticipantsTable();
 
-    const [meetings] = await db.execute(
+    const { rows: meetings } = await db.query(
       `SELECT m.*, c.class_name, u.name as teacher_name
        FROM meetings m
        JOIN classes c ON m.class_id = c.id
        JOIN users u ON m.teacher_id = u.id
-       WHERE m.meeting_code = ? AND m.is_active = TRUE`,
+       WHERE m.meeting_code = $1 AND m.is_active = TRUE`,
       [meeting_code.toUpperCase()]
     );
 
     if (meetings.length === 0) {
-      const [businessMeetings] = await db.execute(
+      const { rows: businessMeetings } = await db.query(
         `SELECT
           bm.id,
           bm.meeting_code,
@@ -317,7 +327,7 @@ exports.joinByCode = async (req, res) => {
           'business' AS meeting_type
         FROM business_meetings bm
         JOIN users u ON u.id = bm.host_id
-        WHERE bm.meeting_code = ? AND bm.is_active = TRUE`,
+        WHERE bm.meeting_code = $1 AND bm.is_active = TRUE`,
         [meeting_code.toUpperCase()]
       );
 
@@ -340,10 +350,16 @@ exports.toggleMeeting = async (req, res) => {
   const teacher_id = req.user.id;
   const { meetingId } = req.params;
   try {
-    const [meeting] = await db.execute('SELECT * FROM meetings WHERE id = ? AND teacher_id = ?', [meetingId, teacher_id]);
+    const { rows: meeting } = await db.query(
+      'SELECT * FROM meetings WHERE id = $1 AND teacher_id = $2',
+      [meetingId, teacher_id]
+    );
     if (meeting.length === 0) return res.status(403).json({ message: 'Not authorized' });
 
-    await db.execute('UPDATE meetings SET is_active = ? WHERE id = ?', [!meeting[0].is_active, meetingId]);
+    await db.query(
+      'UPDATE meetings SET is_active = $1 WHERE id = $2',
+      [!meeting[0].is_active, meetingId]
+    );
     res.status(200).json({ message: 'Meeting status updated' });
   } catch (err) {
     console.error('Toggle meeting error:', err);
@@ -365,14 +381,14 @@ exports.createBusinessMeeting = async (req, res) => {
     await ensureBusinessMeetingParticipantsTable();
     const code = await generateUniqueMeetingCode();
 
-    const [result] = await db.execute(
-      'INSERT INTO business_meetings (host_id, title, meeting_code, is_active) VALUES (?, ?, ?, TRUE)',
+    const { rows } = await db.query(
+      'INSERT INTO business_meetings (host_id, title, meeting_code, is_active) VALUES ($1, $2, $3, TRUE) RETURNING id',
       [host_id, title.trim(), code]
     );
 
     res.status(201).json({
       message: 'Business meeting created',
-      meetingId: result.insertId,
+      meetingId: rows[0].id,
       meeting_code: code
     });
   } catch (err) {
@@ -389,7 +405,7 @@ exports.getBusinessMeetings = async (req, res) => {
     await ensureBusinessMeetingsTable();
     await ensureBusinessMeetingParticipantsTable();
 
-    const [meetings] = await db.execute(
+    const { rows: meetings } = await db.query(
       `SELECT
         bm.id,
         bm.title,
@@ -399,7 +415,7 @@ exports.getBusinessMeetings = async (req, res) => {
         COUNT(bmp.user_id) AS joined_count
        FROM business_meetings bm
        LEFT JOIN business_meeting_participants bmp ON bmp.meeting_id = bm.id
-       WHERE bm.host_id = ?
+       WHERE bm.host_id = $1
        GROUP BY bm.id, bm.title, bm.meeting_code, bm.is_active, bm.created_at
        ORDER BY bm.created_at DESC`,
       [host_id]
@@ -421,8 +437,8 @@ exports.toggleBusinessMeeting = async (req, res) => {
     await ensureBusinessMeetingsTable();
     await ensureBusinessMeetingParticipantsTable();
 
-    const [meeting] = await db.execute(
-      'SELECT id, is_active FROM business_meetings WHERE id = ? AND host_id = ?',
+    const { rows: meeting } = await db.query(
+      'SELECT id, is_active FROM business_meetings WHERE id = $1 AND host_id = $2',
       [meetingId, host_id]
     );
 
@@ -431,7 +447,10 @@ exports.toggleBusinessMeeting = async (req, res) => {
     }
 
     const newStatus = !meeting[0].is_active;
-    await db.execute('UPDATE business_meetings SET is_active = ? WHERE id = ?', [newStatus, meetingId]);
+    await db.query(
+      'UPDATE business_meetings SET is_active = $1 WHERE id = $2',
+      [newStatus, meetingId]
+    );
 
     res.status(200).json({ message: 'Meeting status updated', is_active: newStatus });
   } catch (err) {
@@ -449,8 +468,8 @@ exports.trackBusinessMeetingJoin = async (req, res) => {
     await ensureBusinessMeetingsTable();
     await ensureBusinessMeetingParticipantsTable();
 
-    const [meeting] = await db.execute(
-      'SELECT id FROM business_meetings WHERE id = ? AND is_active = TRUE',
+    const { rows: meeting } = await db.query(
+      'SELECT id FROM business_meetings WHERE id = $1 AND is_active = TRUE',
       [meetingId]
     );
 
@@ -458,19 +477,20 @@ exports.trackBusinessMeetingJoin = async (req, res) => {
       return res.status(404).json({ message: 'Active business meeting not found' });
     }
 
-    await db.execute(
+    // PostgreSQL upsert — INSERT ... ON CONFLICT DO NOTHING
+    await db.query(
       `INSERT INTO business_meeting_participants (meeting_id, user_id)
-       VALUES (?, ?)
-       ON DUPLICATE KEY UPDATE joined_at = joined_at`,
+       VALUES ($1, $2)
+       ON CONFLICT (meeting_id, user_id) DO NOTHING`,
       [meetingId, user_id]
     );
 
-    const [rows] = await db.execute(
-      'SELECT COUNT(*) AS joined_count FROM business_meeting_participants WHERE meeting_id = ?',
+    const { rows } = await db.query(
+      'SELECT COUNT(*) AS joined_count FROM business_meeting_participants WHERE meeting_id = $1',
       [meetingId]
     );
 
-    res.status(200).json({ message: 'Join tracked', joined_count: rows[0]?.joined_count || 0 });
+    res.status(200).json({ message: 'Join tracked', joined_count: parseInt(rows[0]?.joined_count || 0) });
   } catch (err) {
     console.error('Track business meeting join error:', err);
     res.status(500).json({ message: 'Server error tracking join' });

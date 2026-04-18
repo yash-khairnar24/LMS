@@ -20,21 +20,21 @@ exports.register = async (req, res) => {
 
   try {
     // Check if user already exists
-    const [existingUsers] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
+    const { rows: existingUsers } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUsers.length > 0) {
       return res.status(400).json({ message: 'Email is already registered' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const [result] = await db.execute(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+    const { rows } = await db.query(
+      'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id',
       [name, email, hashedPassword, role]
     );
 
     res.status(201).json({
       message: 'User registered successfully',
-      userId: result.insertId
+      userId: rows[0].id
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -58,19 +58,19 @@ exports.login = async (req, res) => {
         return res.status(401).json({ message: 'Invalid admin credentials' });
       }
 
-      let [admins] = await db.execute('SELECT * FROM users WHERE email = ?', [ADMIN_EMAIL]);
+      let { rows: admins } = await db.query('SELECT * FROM users WHERE email = $1', [ADMIN_EMAIL]);
       let adminUser = admins[0];
 
       // Auto-create admin record if missing so all foreign-key relations keep working.
       if (!adminUser) {
         const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
-        const [insertResult] = await db.execute(
-          'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+        const { rows: insertRows } = await db.query(
+          'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id',
           ['System Admin', ADMIN_EMAIL, hashedPassword, 'teacher']
         );
 
         adminUser = {
-          id: insertResult.insertId,
+          id: insertRows[0].id,
           name: 'System Admin',
           email: ADMIN_EMAIL,
           role: 'teacher'
@@ -102,7 +102,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
+    const { rows: users } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     if (users.length === 0) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }

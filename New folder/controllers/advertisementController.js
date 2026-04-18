@@ -3,24 +3,24 @@ const db = require('../config/db');
 const VALID_STATUSES = new Set(['pending', 'approved', 'rejected']);
 
 const ensureAdvertisementsTable = async () => {
-  await db.execute(`
+  await db.query(`
     CREATE TABLE IF NOT EXISTS advertisements (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       teacher_id INT NOT NULL,
       title VARCHAR(255) NOT NULL,
       description TEXT NOT NULL,
       button_text VARCHAR(100) DEFAULT 'Learn More',
       button_link VARCHAR(500) DEFAULT NULL,
-      status ENUM('pending','approved','rejected') DEFAULT 'pending',
+      status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
       approved_by INT NULL,
       approved_at TIMESTAMP NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      INDEX idx_ads_status (status),
-      INDEX idx_ads_teacher (teacher_id),
       FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
     )
   `);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_ads_status ON advertisements(status)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_ads_teacher ON advertisements(teacher_id)`);
 };
 
 exports.createRequest = async (req, res) => {
@@ -34,9 +34,9 @@ exports.createRequest = async (req, res) => {
   try {
     await ensureAdvertisementsTable();
 
-    const [result] = await db.execute(
+    const { rows } = await db.query(
       `INSERT INTO advertisements (teacher_id, title, description, button_text, button_link, status)
-       VALUES (?, ?, ?, ?, ?, 'pending')`,
+       VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING id`,
       [
         teacherId,
         title.trim(),
@@ -46,7 +46,7 @@ exports.createRequest = async (req, res) => {
       ]
     );
 
-    res.status(201).json({ message: 'Advertisement request submitted', requestId: result.insertId });
+    res.status(201).json({ message: 'Advertisement request submitted', requestId: rows[0].id });
   } catch (error) {
     console.error('Create advertisement request error:', error);
     res.status(500).json({ message: 'Server error creating advertisement request' });
@@ -59,10 +59,10 @@ exports.getMyRequests = async (req, res) => {
   try {
     await ensureAdvertisementsTable();
 
-    const [requests] = await db.execute(
+    const { rows: requests } = await db.query(
       `SELECT id, title, description, button_text, button_link, status, created_at, approved_at
        FROM advertisements
-       WHERE teacher_id = ?
+       WHERE teacher_id = $1
        ORDER BY created_at DESC`,
       [teacherId]
     );
@@ -90,13 +90,22 @@ exports.getAdminRequests = async (req, res) => {
 
     const params = [];
     if (status && VALID_STATUSES.has(status)) {
-      query += ' WHERE a.status = ?';
+      query += ' WHERE a.status = $1';
       params.push(status);
     }
 
-    query += ` ORDER BY FIELD(a.status, 'pending', 'approved', 'rejected'), a.created_at DESC`;
+    // In PostgreSQL, array position can be used but standard case is better or just standard ordering
+    // PostgreSQL doesn't have FIELD() function out of the box like MySQL.
+    // We can use CASE WHEN to order specific statuses
+    query += ` ORDER BY 
+      CASE a.status 
+        WHEN 'pending' THEN 1 
+        WHEN 'approved' THEN 2 
+        WHEN 'rejected' THEN 3 
+        ELSE 4 
+      END, a.created_at DESC`;
 
-    const [requests] = await db.execute(query, params);
+    const { rows: requests } = await db.query(query, params);
     res.status(200).json({ requests });
   } catch (error) {
     console.error('Get admin advertisement requests error:', error);
@@ -111,7 +120,7 @@ exports.approveRequest = async (req, res) => {
   try {
     await ensureAdvertisementsTable();
 
-    const [existing] = await db.execute('SELECT id, status FROM advertisements WHERE id = ?', [requestId]);
+    const { rows: existing } = await db.query('SELECT id, status FROM advertisements WHERE id = $1', [requestId]);
     if (existing.length === 0) {
       return res.status(404).json({ message: 'Advertisement request not found' });
     }
@@ -120,10 +129,10 @@ exports.approveRequest = async (req, res) => {
       return res.status(200).json({ message: 'Advertisement already approved' });
     }
 
-    await db.execute(
+    await db.query(
       `UPDATE advertisements
-       SET status = 'approved', approved_by = ?, approved_at = NOW()
-       WHERE id = ?`,
+       SET status = 'approved', approved_by = $1, approved_at = NOW()
+       WHERE id = $2`,
       [adminId, requestId]
     );
 
@@ -141,15 +150,15 @@ exports.rejectRequest = async (req, res) => {
   try {
     await ensureAdvertisementsTable();
 
-    const [existing] = await db.execute('SELECT id FROM advertisements WHERE id = ?', [requestId]);
+    const { rows: existing } = await db.query('SELECT id FROM advertisements WHERE id = $1', [requestId]);
     if (existing.length === 0) {
       return res.status(404).json({ message: 'Advertisement request not found' });
     }
 
-    await db.execute(
+    await db.query(
       `UPDATE advertisements
-       SET status = 'rejected', approved_by = ?, approved_at = NULL
-       WHERE id = ?`,
+       SET status = 'rejected', approved_by = $1, approved_at = NULL
+       WHERE id = $2`,
       [adminId, requestId]
     );
 
@@ -164,7 +173,7 @@ exports.getApprovedAdvertisements = async (req, res) => {
   try {
     await ensureAdvertisementsTable();
 
-    const [advertisements] = await db.execute(
+    const { rows: advertisements } = await db.query(
       `SELECT
         a.id, a.title, a.description, a.button_text, a.button_link, a.created_at, a.approved_at,
         u.name AS teacher_name

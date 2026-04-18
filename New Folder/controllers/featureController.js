@@ -4,27 +4,25 @@ const db = require('../config/db');
 exports.getLiveClasses = async (req, res) => {
   const student_id = req.user.id;
   try {
-    // Get active sessions/meetings for classes the student is enrolled in
-    const [meetings] = await db.execute(`
+    const { rows: meetings } = await db.query(`
       SELECT m.id, m.topic as title, m.meeting_code, m.is_active as isLive,
              m.started_at as time, c.class_name as subject, u.name as teacher
       FROM meetings m
       JOIN classes c ON m.class_id = c.id
       JOIN enrollments e ON c.id = e.class_id
       JOIN users u ON c.teacher_id = u.id
-      WHERE e.student_id = ?
+      WHERE e.student_id = $1
       ORDER BY m.started_at DESC
     `, [student_id]);
 
-    // We map 'meetings' to the format the frontend expects
     const formattedSessions = meetings.map(m => ({
       id: m.id,
       title: m.title,
       teacher: m.teacher,
       subject: m.subject,
       time: new Date(m.time).toLocaleString(),
-      students: 0, // Placeholder
-      isLive: Boolean(m.isLive),
+      students: 0,
+      isLive: Boolean(m.islive),
       code: m.meeting_code
     }));
 
@@ -39,21 +37,21 @@ exports.getLiveClasses = async (req, res) => {
 exports.getStudyMaterials = async (req, res) => {
   const student_id = req.user.id;
   try {
-    const [materials] = await db.execute(`
+    const { rows: materials } = await db.query(`
       SELECT m.id, m.title, m.file_path, m.created_at, 
              c.class_name as subject, u.name as teacher
       FROM materials m
       JOIN classes c ON m.class_id = c.id
       JOIN enrollments e ON c.id = e.class_id
       JOIN users u ON c.teacher_id = u.id
-      WHERE e.student_id = ?
+      WHERE e.student_id = $1
       ORDER BY m.created_at DESC
     `, [student_id]);
 
     const formattedMaterials = materials.map(m => ({
       id: m.id,
       title: m.title,
-      type: 'PDF', // Assuming mostly PDFs, or derive from file_url extension
+      type: 'PDF',
       size: 'Unknown',
       subject: m.subject,
       teacher: m.teacher,
@@ -73,16 +71,16 @@ exports.getStudyMaterials = async (req, res) => {
 exports.getRecordings = async (req, res) => {
   const student_id = req.user.id;
   try {
-    const [lectures] = await db.execute(`
+    const { rows: lectures } = await db.query(`
       SELECT l.id, l.title, l.video_url, l.created_at,
       c.class_name as subject, u.name as teacher
       FROM lectures l
       JOIN classes c ON l.class_id = c.id
       JOIN enrollments e ON c.id = e.class_id
       JOIN users u ON c.teacher_id = u.id
-      WHERE e.student_id = ?
+      WHERE e.student_id = $1
       ORDER BY l.created_at DESC
-      `, [student_id]);
+    `, [student_id]);
 
     const formattedRecordings = lectures.map(l => ({
       id: l.id,
@@ -106,8 +104,7 @@ exports.getRecordings = async (req, res) => {
 exports.getAssignments = async (req, res) => {
   const student_id = req.user.id;
   try {
-    // Get assignments and any submissions the student has made
-    const [assignments] = await db.execute(`
+    const { rows: assignments } = await db.query(`
       SELECT a.id, a.title, a.due_date as due, a.max_marks as marks,
       c.class_name as subject, u.name as teacher,
       s.id as submission_id, s.score, s.status
@@ -115,10 +112,10 @@ exports.getAssignments = async (req, res) => {
       JOIN classes c ON a.class_id = c.id
       JOIN enrollments e ON c.id = e.class_id
       JOIN users u ON c.teacher_id = u.id
-      LEFT JOIN assignment_submissions s ON a.id = s.assignment_id AND s.student_id = ?
-      WHERE e.student_id = ?
-        ORDER BY a.due_date ASC
-      `, [student_id, student_id]);
+      LEFT JOIN assignment_submissions s ON a.id = s.assignment_id AND s.student_id = $1
+      WHERE e.student_id = $2
+      ORDER BY a.due_date ASC
+    `, [student_id, student_id]);
 
     const formattedAssignments = assignments.map(a => {
       const isPastDue = new Date(a.due) < new Date();
@@ -138,7 +135,7 @@ exports.getAssignments = async (req, res) => {
         status: status,
         marks: String(a.marks),
         submitted: !!a.submission_id,
-        score: a.score ? `${ a.score } / ${ a.marks }` : null
+        score: a.score ? `${a.score} / ${a.marks}` : null
       };
     });
 
@@ -161,13 +158,15 @@ exports.uploadMaterial = async (req, res) => {
   }
 
   try {
-    // Verify teacher owns the class
-    const [existing] = await db.execute('SELECT id FROM classes WHERE id = ? AND teacher_id = ?', [class_id, teacher_id]);
+    const { rows: existing } = await db.query(
+      'SELECT id FROM classes WHERE id = $1 AND teacher_id = $2',
+      [class_id, teacher_id]
+    );
     if (existing.length === 0) return res.status(403).json({ message: 'Not authorized' });
 
     const file_path = `/uploads/${file.filename}`;
-    await db.execute(
-      'INSERT INTO materials (class_id, title, file_path, file_type) VALUES (?, ?, ?, ?)',
+    await db.query(
+      'INSERT INTO materials (class_id, title, file_path, file_type) VALUES ($1, $2, $3, $4)',
       [class_id, title, file_path, file.mimetype]
     );
 
@@ -187,19 +186,21 @@ exports.createAssignment = async (req, res) => {
   }
 
   try {
-    const [existing] = await db.execute('SELECT id FROM classes WHERE id = ? AND teacher_id = ?', [class_id, teacher_id]);
+    const { rows: existing } = await db.query(
+      'SELECT id FROM classes WHERE id = $1 AND teacher_id = $2',
+      [class_id, teacher_id]
+    );
     if (existing.length === 0) return res.status(403).json({ message: 'Not authorized' });
 
-    const formattedDate = due_date.replace('T', ' ');
-    await db.execute(
-      'INSERT INTO assignments (class_id, title, due_date, max_marks) VALUES (?, ?, ?, ?)',
-      [class_id, title, formattedDate, max_marks]
+    await db.query(
+      'INSERT INTO assignments (class_id, title, due_date, max_marks) VALUES ($1, $2, $3, $4)',
+      [class_id, title, due_date, max_marks]
     );
 
     res.status(201).json({ message: 'Assignment created successfully' });
   } catch (error) {
-    console.error('Create assignment error:', error.message, error.sqlMessage);
-    res.status(500).json({ message: 'Server error creating assignment', error: error.message, sqlMessage: error.sqlMessage });
+    console.error('Create assignment error:', error.message);
+    res.status(500).json({ message: 'Server error creating assignment', error: error.message });
   }
 };
 
@@ -207,11 +208,11 @@ exports.createAssignment = async (req, res) => {
 exports.getTeacherMaterials = async (req, res) => {
   const teacher_id = req.user.id;
   try {
-    const [materials] = await db.execute(`
+    const { rows: materials } = await db.query(`
       SELECT m.id, m.title, m.file_path, m.file_type, m.created_at, c.class_name
       FROM materials m
       JOIN classes c ON m.class_id = c.id
-      WHERE c.teacher_id = ?
+      WHERE c.teacher_id = $1
       ORDER BY m.created_at DESC
     `, [teacher_id]);
     res.status(200).json({ materials });
@@ -225,15 +226,15 @@ exports.getTeacherMaterials = async (req, res) => {
 exports.getTeacherAssignments = async (req, res) => {
   const teacher_id = req.user.id;
   try {
-    const [assignments] = await db.execute(`
+    const { rows: assignments } = await db.query(`
       SELECT a.id, a.title, a.due_date, a.max_marks, a.created_at,
              c.class_name,
              COUNT(s.id) as submission_count
       FROM assignments a
       JOIN classes c ON a.class_id = c.id
       LEFT JOIN assignment_submissions s ON a.id = s.assignment_id
-      WHERE c.teacher_id = ?
-      GROUP BY a.id
+      WHERE c.teacher_id = $1
+      GROUP BY a.id, a.title, a.due_date, a.max_marks, a.created_at, c.class_name
       ORDER BY a.due_date ASC
     `, [teacher_id]);
     res.status(200).json({ assignments });
@@ -247,7 +248,7 @@ exports.getTeacherAssignments = async (req, res) => {
 exports.getSmartTestResults = async (req, res) => {
   const teacher_id = req.user.id;
   try {
-    const [results] = await db.execute(`
+    const { rows: results } = await db.query(`
       SELECT a.title as assignment_title, c.class_name,
              u.name as student_name, s.score, a.max_marks,
              s.status, s.submitted_at
@@ -255,7 +256,7 @@ exports.getSmartTestResults = async (req, res) => {
       JOIN assignments a ON s.assignment_id = a.id
       JOIN classes c ON a.class_id = c.id
       JOIN users u ON s.student_id = u.id
-      WHERE c.teacher_id = ? AND s.status = 'graded'
+      WHERE c.teacher_id = $1 AND s.status = 'graded'
       ORDER BY s.submitted_at DESC
     `, [teacher_id]);
     res.status(200).json({ results });
