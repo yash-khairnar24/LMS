@@ -339,7 +339,7 @@ const TeacherDashboard = () => {
               <button onClick={() => setSidebarOpen(true)} className="p-2 text-white/80 hover:text-white hover:bg-indigo-700 rounded-xl transition-colors">
                 <Menu className="h-6 w-6" />
               </button>
-              <Book className="h-7 w-7 text-white" />
+              <img src="https://cdn.vectorstock.com/i/500p/53/95/learning-management-system-concept-vector-27335395.jpg" alt="EduLearn Logo" className="h-9 w-9 rounded-xl object-cover" />
               <span className="font-bold text-white text-xl">LMS Teacher Portal</span>
             </div>
             <div className="flex items-center space-x-4">
@@ -973,7 +973,7 @@ const TeacherDashboard = () => {
         <div className="bg-gradient-to-br from-indigo-600 to-purple-700 px-5 py-6 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <div className="bg-white/20 p-1.5 rounded-lg"><Book className="h-5 w-5 text-white" /></div>
+              <img src="https://cdn.vectorstock.com/i/500p/53/95/learning-management-system-concept-vector-27335395.jpg" alt="EduLearn Logo" className="h-9 w-9 rounded-lg object-cover" />
               <span className="text-white font-bold text-lg">EduLearn</span>
             </div>
             <p className="text-indigo-100 text-sm font-medium">{user?.name}</p>

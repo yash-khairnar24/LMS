@@ -71,10 +71,8 @@ const Login = () => {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <div className="bg-violet-400 p-2 rounded-xl">
-              <BookOpen className="h-6 w-6 text-white" strokeWidth={2} />
-            </div>
-            <span className="text-xl font-extrabold text-slate-800 tracking-tight">EduLearn</span>
+            <img src="https://cdn.vectorstock.com/i/500p/53/95/learning-management-system-concept-vector-27335395.jpg" alt="EduLearn Logo" className="h-10 w-10 rounded-xl object-cover" />
+            <span className="text-xl font-extrabold text-slate-800 tracking-tight">Mysite</span>
           </div>
 
           {/* Nav Links */}
@@ -438,7 +436,8 @@ const Login = () => {
       <footer className="bg-slate-900 text-slate-400 py-8 text-center text-sm">
         <div className="flex items-center justify-center gap-2 mb-2">
           <div className="bg-violet-400 p-1.5 rounded-lg"><BookOpen className="h-4 w-4 text-white" /></div>
-          <span className="text-white font-bold">EduLearn</span>
+          <img src="https://cdn.vectorstock.com/i/500p/53/95/learning-management-system-concept-vector-27335395.jpg" alt="EduLearn Logo" className="h-8 w-8 rounded-lg object-cover" />
+          <span className="text-white font-bold">MySite</span>
         </div>
         <p>© {new Date().getFullYear()} EduLearn. All rights reserved.</p>
       </footer>

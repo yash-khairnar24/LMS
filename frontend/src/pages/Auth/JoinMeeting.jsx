@@ -37,7 +37,7 @@ const JoinMeeting = () => {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/10 px-5 py-3 rounded-2xl">
-            <Book className="h-6 w-6 text-indigo-300" />
+            <img src="https://cdn.vectorstock.com/i/500p/53/95/learning-management-system-concept-vector-27335395.jpg" alt="EduLearn Logo" className="h-7 w-7 rounded-lg object-cover" />
             <span className="text-white font-bold text-lg">EduLearn LMS</span>
           </div>
         </div>
