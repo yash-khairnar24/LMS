@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { Wifi, ArrowRight, Book } from 'lucide-react';
+import lmsLogo from '../../assets/lms_logo.png';
 
 /**
  * Public page at /join or /join/:code
@@ -37,7 +38,7 @@ const JoinMeeting = () => {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/10 px-5 py-3 rounded-2xl">
-            <img src="https://cdn.vectorstock.com/i/500p/53/95/learning-management-system-concept-vector-27335395.jpg" alt="EduLearn Logo" className="h-7 w-7 rounded-lg object-cover" />
+            <img src={lmsLogo} alt="LMS Logo" className="h-7 w-7 rounded-full object-cover" />
             <span className="text-white font-bold text-lg">EduLearn LMS</span>
           </div>
         </div>

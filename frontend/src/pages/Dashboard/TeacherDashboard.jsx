@@ -10,6 +10,7 @@ import {
   MessageSquareText, PhoneCall, Wifi, Copy, ToggleLeft, ToggleRight,
   Menu, LayoutDashboard, GraduationCap, Megaphone, ShieldCheck
 } from 'lucide-react';
+import lmsLogo from '../../assets/lms_logo.png';
 
 const FEATURES = [
   { key: 'feature_live_class', label: 'Live Class', icon: PlayCircle },
@@ -339,7 +340,7 @@ const TeacherDashboard = () => {
               <button onClick={() => setSidebarOpen(true)} className="p-2 text-white/80 hover:text-white hover:bg-indigo-700 rounded-xl transition-colors">
                 <Menu className="h-6 w-6" />
               </button>
-              <img src="https://cdn.vectorstock.com/i/500p/53/95/learning-management-system-concept-vector-27335395.jpg" alt="EduLearn Logo" className="h-9 w-9 rounded-xl object-cover" />
+              <img src={lmsLogo} alt="LMS Logo" className="h-9 w-9 rounded-full object-cover" />
               <span className="font-bold text-white text-xl">LMS Teacher Portal</span>
             </div>
             <div className="flex items-center space-x-4">
@@ -973,7 +974,7 @@ const TeacherDashboard = () => {
         <div className="bg-gradient-to-br from-indigo-600 to-purple-700 px-5 py-6 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <img src="https://cdn.vectorstock.com/i/500p/53/95/learning-management-system-concept-vector-27335395.jpg" alt="EduLearn Logo" className="h-9 w-9 rounded-lg object-cover" />
+              <img src={lmsLogo} alt="LMS Logo" className="h-9 w-9 rounded-full object-cover" />
               <span className="text-white font-bold text-lg">EduLearn</span>
             </div>
             <p className="text-indigo-100 text-sm font-medium">{user?.name}</p>

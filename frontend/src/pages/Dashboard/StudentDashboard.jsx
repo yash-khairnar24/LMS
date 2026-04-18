@@ -4,6 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import { BookOpen, Search, LogOut, CheckCircle, Menu, PlayCircle, HelpCircle, Video, ClipboardCheck, Clock, MessageSquareText, PhoneCall, Home, User, Bell, ArrowRight, X, GraduationCap, LayoutDashboard } from 'lucide-react';
 import AdvertisementCarousel from '../../components/AdvertisementCarousel';
+import lmsLogo from '../../assets/lms_logo.png';
 
 const StudentDashboard = () => {
   const { user, token, logout } = useContext(AuthContext);
@@ -336,7 +337,7 @@ const StudentDashboard = () => {
         <div className="bg-gradient-to-br from-indigo-600 to-purple-700 px-5 py-6 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <img src="https://cdn.vectorstock.com/i/500p/53/95/learning-management-system-concept-vector-27335395.jpg" alt="EduLearn Logo" className="h-9 w-9 rounded-lg object-cover" />
+              <img src={lmsLogo} alt="LMS Logo" className="h-9 w-9 rounded-full object-cover" />
               <span className="text-white font-bold text-lg">EduLearn</span>
             </div>
             <p className="text-indigo-100 text-sm font-medium">{user?.name}</p>
