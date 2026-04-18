@@ -73,7 +73,7 @@ const Login = () => {
           {/* Logo */}
           <div className="flex items-center gap-2.5">
             <img src={lmsLogo} alt="LMS Logo" className="h-10 w-10 rounded-full object-cover" />
-            <span className="text-xl font-extrabold text-slate-800 tracking-tight">Mysite</span>
+            <span className="text-xl font-extrabold text-slate-800 tracking-tight">Cognexia LMS</span>
           </div>
 
           {/* Nav Links */}
@@ -438,7 +438,7 @@ const Login = () => {
         <div className="flex items-center justify-center gap-2 mb-2">
 
           <img src={lmsLogo} alt="LMS Logo" className="h-8 w-8 rounded-full object-cover" />
-          <span className="text-white font-bold">MySite</span>
+          <span className="text-white font-bold">Cognexia LMS</span>
         </div>
         <p>© {new Date().getFullYear()} EduLearn. All rights reserved.</p>
       </footer>
