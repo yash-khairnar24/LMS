@@ -5,19 +5,19 @@ require('dotenv').config();
 
 async function initDB() {
   const dbName = process.env.DB_NAME || 'online_classroom';
-  
+
   try {
     // Step 1: Create Database if not exists
     const initialClient = new Client({
       host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT || 5432,
+      port: process.env.DB_PORT || 5431,
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || '123456',
       database: 'postgres'
     });
-    
+
     await initialClient.connect();
-    
+
     const res = await initialClient.query(`SELECT datname FROM pg_catalog.pg_database WHERE datname = $1`, [dbName]);
     if (res.rowCount === 0) {
       console.log(`Creating database ${dbName}...`);
@@ -30,7 +30,7 @@ async function initDB() {
     // Step 2: Execute schema.sql
     const client = new Client({
       host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT || 5432,
+      port: process.env.DB_PORT || 5431,
       user: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || '123456',
       database: dbName
